@@ -53,6 +53,8 @@ This project follows semantic versioning with incremental improvements.
 
 ---
 
+# Changelog
+
 ## v1.6
 - Finalized **production-ready template** for Zabbix 7.4.
 - Added **sustained error triggers** with configurable macro `{$IF_ERROR_RATE}`.
@@ -70,6 +72,7 @@ This project follows semantic versioning with incremental improvements.
 - Template validated and tested on Zabbix 7.4.
 
 ---
+
 ## v1.7 (Current)
 - Added **new macros** for discard and broadcast thresholds:
   - `{$IF_DISCARD_RATE}`
@@ -88,5 +91,15 @@ This project follows semantic versioning with incremental improvements.
   - Duplex mismatch detection
   - High discard rate detection
   - Broadcast storm detection
-- All new items and triggers assigned proper **UUIDs** for Zabbix import compatibility
-- Template fully validated and importable in **Zabbix 7.4**
+  - Multicast anomaly detection
+- All new items and triggers assigned proper **UUIDs** for Zabbix import compatibility.
+- Template fully validated and importable in **Zabbix 7.4**.
+
+---
+
+## v1.8 (Planned)
+- Threshold tuning: make discard/broadcast/multicast thresholds configurable via macros.
+- Enhanced tagging: VLAN IDs, duplex state, MTU values for dashboard filtering.
+- Calculated KPIs: error/discard percentage relative to traffic volume.
+- Dashboard integration: prebuilt graphs for utilization, error/discard trends.
+- Compatibility testing with **Zabbix 8.x**.
