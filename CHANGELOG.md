@@ -97,7 +97,7 @@ This project follows semantic versioning with incremental improvements.
 
 ---
 
-## v1.8 (Current)
+## v1.8
 - Added **new item prototypes**:
   - CRC error counters (`ifInCrcErrors[{#IFINDEX}]`)
   - Collision counters (`ifCollisions[{#IFINDEX}]`)
@@ -115,3 +115,33 @@ This project follows semantic versioning with incremental improvements.
 - Added **dashboard graph integration** for utilization and error/discard trends.
 - Automated **validation scripts** to ensure import compliance.
 - Verified compatibility with **Zabbix 8.x**.
+
+---
+
+## v1.9 (Current)
+- Added **new item prototypes**:
+  - Queue drop counters (`ifQueueDrops[{#IFINDEX}]`)
+  - Latency calculation per interface (`ifLatency[{#IFINDEX}]`)
+  - SLA compliance KPI (`ifSLA[{#IFINDEX}]`)
+- Added **new trigger prototypes**:
+  - Queue drop anomaly detection
+  - Latency threshold detection
+  - SLA compliance threshold detection
+- Extended **macro set**:
+  - `{$IF_QUEUE_DROP_THRESHOLD}`
+  - `{$IF_LATENCY_WARN}`
+  - `{$IF_SLA_MIN}`
+- Expanded **KPI monitoring**:
+  - SLA percentage based on error/discard KPIs
+  - Latency‑based performance evaluation
+- Enhanced **reliability monitoring**:
+  - Queue drop visibility for congestion detection
+  - Improved anomaly detection logic
+- Updated **dashboard integration**:
+  - Added SLA and latency graphs
+  - Improved reliability and performance panels
+- Improved **tagging model**:
+  - Additional tags for SLA, latency, and queue metrics
+- Updated **validation scripts**:
+  - Extended checks for new KPIs and thresholds
+- Template validated for **Zabbix 7.4** and **tested on Zabbix 8.x**
