@@ -118,30 +118,31 @@ This project follows semantic versioning with incremental improvements.
 
 ---
 
-## v1.9 (Current)
-- Added **new item prototypes**:
-  - Queue drop counters (`ifQueueDrops[{#IFINDEX}]`)
-  - Latency calculation per interface (`ifLatency[{#IFINDEX}]`)
-  - SLA compliance KPI (`ifSLA[{#IFINDEX}]`)
-- Added **new trigger prototypes**:
-  - Queue drop anomaly detection
-  - Latency threshold detection
-  - SLA compliance threshold detection
-- Extended **macro set**:
-  - `{$IF_QUEUE_DROP_THRESHOLD}`
-  - `{$IF_LATENCY_WARN}`
-  - `{$IF_SLA_MIN}`
-- Expanded **KPI monitoring**:
-  - SLA percentage based on error/discard KPIs
-  - Latency‑based performance evaluation
-- Enhanced **reliability monitoring**:
-  - Queue drop visibility for congestion detection
-  - Improved anomaly detection logic
-- Updated **dashboard integration**:
-  - Added SLA and latency graphs
-  - Improved reliability and performance panels
-- Improved **tagging model**:
-  - Additional tags for SLA, latency, and queue metrics
-- Updated **validation scripts**:
-  - Extended checks for new KPIs and thresholds
+## v1.9.2 (Current)
+- Added **native Zabbix 7.4 valuemap support**:
+  - Introduced valuemaps section inside template block
+  - Added UUID‑based valuemaps for:
+    - 3Com-Port-Status
+    - 3Com-Admin-Status
+    - 3Com-Duplex-Mode
+    - 3Com-Speed
+- Updated **item prototypes**:
+  - Standardized valuemap references to new valuemap names
+  - Improved naming consistency across interface metadata items
+- Enhanced **template metadata**:
+  - Updated description block with clearer feature list and compatibility notes
+  - Updated template version to 1.9.2
+- Improved **LLD structure**:
+  - Cleaned and aligned UUID patterns for all new item and trigger prototypes
+  - Ensured full compatibility with Zabbix 7.4 import schema
+- Improved **trigger consistency**:
+  - Verified all new v1.9 triggers (SLA, latency, queue drops) for correct severity alignment
+  - Updated trigger names for clarity and uniformity
+- Enhanced **macro set**:
+  - Validated new macros for SLA, latency, and queue thresholds
+  - Improved macro descriptions and internal usage consistency
+- Internal **code cleanup**:
+  - Removed legacy valuemap references
+  - Standardized naming conventions for valuemaps, items, and triggers
+  - Improved YAML structure for readability and maintainability
 - Template validated for **Zabbix 7.4** and **tested on Zabbix 8.x**
