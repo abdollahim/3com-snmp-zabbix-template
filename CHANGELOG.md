@@ -73,7 +73,7 @@ This project follows semantic versioning with incremental improvements.
 
 ---
 
-## v1.7 (Current)
+## v1.7
 - Added **new macros** for discard and broadcast thresholds:
   - `{$IF_DISCARD_RATE}`
   - `{$BROADCAST_STORM}`
@@ -97,9 +97,21 @@ This project follows semantic versioning with incremental improvements.
 
 ---
 
-## v1.8 (Planned)
-- Threshold tuning: make discard/broadcast/multicast thresholds configurable via macros.
-- Enhanced tagging: VLAN IDs, duplex state, MTU values for dashboard filtering.
-- Calculated KPIs: error/discard percentage relative to traffic volume.
-- Dashboard integration: prebuilt graphs for utilization, error/discard trends.
-- Compatibility testing with **Zabbix 8.x**.
+## v1.8 (Current)
+- Added **new item prototypes**:
+  - CRC error counters (`ifInCrcErrors[{#IFINDEX}]`)
+  - Collision counters (`ifCollisions[{#IFINDEX}]`)
+  - Error/discard percentage KPI (`ifErrorDiscardPct[{#IFINDEX}]`)
+- Added **new trigger prototypes**:
+  - CRC error spike detection
+  - Collision anomaly detection
+  - Error/discard percentage threshold
+- Extended **macros**:
+  - `{$IF_CRC_THRESHOLD}`
+  - `{$IF_COLLISION_THRESHOLD}`
+  - `{$IF_ERROR_PCT_WARN}`
+- Enhanced **role detection** and tagging for VLAN, duplex, and MTU.
+- Introduced **calculated KPIs** for reliability monitoring.
+- Added **dashboard graph integration** for utilization and error/discard trends.
+- Automated **validation scripts** to ensure import compliance.
+- Verified compatibility with **Zabbix 8.x**.
