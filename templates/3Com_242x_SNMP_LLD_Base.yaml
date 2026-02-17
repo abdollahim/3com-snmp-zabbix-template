@@ -5,28 +5,46 @@ zabbix_export:
     - uuid: 36f8c7b12a6b4d3e9bfa1a2b3c4d5e6f
       name: "Templates/Network"
 
+  hosts: []
+
   templates:
     - uuid: 550e8400e29b41d4a716446655449999
       template: "3Com 242x SNMP LLD Base"
-      name: "3Com 242x SNMP LLD Base v1.9"
+      name: "3Com 242x SNMP LLD Base v1.9.2"
       description: |
-        Production-ready SNMP LLD template for 3Com switches.
-        Version: 1.9
-        - Interface discovery
-        - Traffic, speed, utilization (smoothed)
-        - Error, discard, CRC, and collision monitoring (sustained)
-        - Broadcast/multicast counters with configurable thresholds
-        - Admin/oper status logic
-        - Per-interface macros (extended for CRC, collisions, error percentage, queue drops, latency, SLA)
-        - Multi-tier uplink role detection (uplink-100M, uplink-1G, uplink-10G, access)
-        - VLAN, MTU, duplex info with enhanced tagging
-        - Calculated KPIs (error/discard percentage relative to traffic volume, SLA compliance)
-        - Queue drop monitoring for reliability
-        - Latency calculation per interface
-        - Optimized trends/history for DB efficiency
-        - Prebuilt dashboard graphs for utilization, reliability, and SLA metrics
-        - Automated validation scripts for import compliance
-        - Fully LLD and importable in Zabbix 7.4, tested for Zabbix 8.x compatibility
+        Production‑ready SNMP Low‑Level Discovery (LLD) template for 3Com 242x series switches.
+        Version: 1.9.2
+
+        This template provides comprehensive interface‑level monitoring with enhanced reliability,
+        performance analytics, and SLA‑oriented KPIs. It is optimized for Zabbix 7.4 and validated
+        for compatibility with Zabbix 8.x.
+
+        Features:
+          • Automatic interface discovery using IF‑MIB
+          • Real‑time traffic monitoring (bps, utilization, smoothed 3‑sample average)
+          • Error, discard, CRC, and collision monitoring with sustained‑rate detection
+          • Broadcast and multicast anomaly detection with configurable thresholds
+          • Admin/oper status correlation logic for accurate link‑state reporting
+          • Per‑interface macros for CRC, collisions, error percentage, queue drops, latency, and SLA
+          • Multi‑tier uplink role detection (100M / 1G / 10G / access)
+          • VLAN, MTU, and duplex mode collection with enhanced tagging
+          Calculated KPIs:
+            – Error/discard percentage relative to traffic volume
+            – SLA compliance score
+            – Latency estimation per interface
+          • Queue drop monitoring for reliability and congestion analysis
+          • Optimized history and trend retention for database efficiency
+          • Predefined value maps for port status, admin status, duplex mode, and speed
+          • Clean, severity‑aligned trigger set for performance, reliability, and SLA deviations
+          • Fully LLD‑driven, no manual configuration required
+
+        Intended Use:
+          • Suitable for production environments with large numbers of 3Com switches
+          • Designed for long‑term trending, SLA reporting, and reliability analysis
+          • Ideal for network operations teams requiring detailed per‑interface diagnostics
+
+        Compatibility: • Fully compatible with Zabbix 7.4
+          • Tested for Zabbix 8.x import and runtime behavior
       groups:
         - name: "Templates/Network"
 
@@ -97,6 +115,8 @@ zabbix_export:
               snmp_oid: "ifOperStatus.{#IFINDEX}"
               delay: "2m"
               value_type: UNSIGNED
+              valuemap:
+                name: "3Com-Port-Status"
               history: "15d"
               trends: "0"
               tags:
@@ -112,6 +132,8 @@ zabbix_export:
               snmp_oid: "ifAdminStatus.{#IFINDEX}"
               delay: "5m"
               value_type: UNSIGNED
+              valuemap:
+                name: "3Com-Admin-Status"
               history: "15d"
               trends: "0"
               tags:
@@ -125,6 +147,8 @@ zabbix_export:
               type: SNMP_AGENT
               key: "ifSpeed[{#IFINDEX}]"
               snmp_oid: "ifSpeed.{#IFINDEX}"
+              valuemap:
+                name: "3Com-Speed"
               delay: "1h"
               units: bps
               history: "15d"
@@ -265,6 +289,8 @@ zabbix_export:
               type: SNMP_AGENT
               key: "ifDuplex[{#IFINDEX}]"
               snmp_oid: "ifDuplex.{#IFINDEX}"
+              valuemap:
+                name: "3Com-Duplex-Mode"
               delay: "1h"
               history: "15d"
               trends: "0"
@@ -340,7 +366,7 @@ zabbix_export:
               key: "ifErrorDiscardPct[{#IFINDEX}]"
               params: >
                 (last(//ifInErrors[{#IFINDEX}])+last(//ifOutErrors[{#IFINDEX}])+
-                 last(//ifInDiscards[{#IFINDEX}])+last(//ifOutDiscards[{#IFINDEX}]))
+                  last(//ifInDiscards[{#IFINDEX}])+last(//ifOutDiscards[{#IFINDEX}]))
                 /
                 (last(//ifInOctets[{#IFINDEX}])+last(//ifOutOctets[{#IFINDEX}]))*100
               delay: "5m"
@@ -509,3 +535,43 @@ zabbix_export:
               name: "Interface {#IFNAME} SLA compliance <95%"
               expression: "last(/3Com 242x SNMP LLD Base/ifSLA[{#IFINDEX}])<95"
               priority: HIGH
+      valuemaps:
+        - uuid: 550e8400e29b41d4a716446655449a01
+          name: "3Com-Port-Status"
+          mappings:
+            - value: "1"
+              newvalue: "UP"
+            - value: "2"
+              newvalue: "DOWN"
+            - value: "3"
+              newvalue: "TESTING"
+
+        - uuid: 550e8400e29b41d4a716446655449a02
+          name: "3Com-Duplex-Mode"
+          mappings:
+            - value: "1"
+              newvalue: "Half"
+            - value: "2"
+              newvalue: "Full"
+            - value: "3"
+              newvalue: "Auto"
+
+        - uuid: 550e8400e29b41d4a716446655449a03
+          name: "3Com-Admin-Status"
+          mappings:
+            - value: "1"
+              newvalue: "UP"
+            - value: "2"
+              newvalue: "DOWN"
+            - value: "3"
+              newvalue: "TESTING"
+
+        - uuid: 550e8400e29b41d4a716446655449a04
+          name: "3Com-Speed"
+          mappings:
+            - value: "100000000"
+              newvalue: "100M"
+            - value: "1000000000"
+              newvalue: "1G"
+            - value: "10000000000"
+              newvalue: "10G"
