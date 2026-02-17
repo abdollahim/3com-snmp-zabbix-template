@@ -112,16 +112,4 @@ This template provides **production-ready LLD monitoring** for 3Com 242x switche
 
 ---
 
-## Changelog
-
-### v1.6 (Current)
-- Added **smoothed utilization** calculation to reduce false alerts.
-- Added **role detection** (uplink-100M, uplink-1G, uplink-10G, access).
-- Added **sustained error triggers** for input/output errors.
-- Optimized **history/trends** retention to reduce DB load.
-- Improved **structured tags** for dashboards and alerting.
-- Fully tested and validated on **Zabbix 7.4**.
-
----
-
 **End of README**
