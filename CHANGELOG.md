@@ -70,7 +70,6 @@ This project follows semantic versioning with incremental improvements.
 - Template validated and tested on Zabbix 7.4.
 
 ---
-
 ## v1.7 (Current)
 - Added **new macros** for discard and broadcast thresholds:
   - `{$IF_DISCARD_RATE}`
@@ -85,7 +84,7 @@ This project follows semantic versioning with incremental improvements.
 - Reworked **role detection**:
   - Split into separate calculated items for `uplink-10G`, `uplink-1G`, `uplink-100M`, and `access`
   - Each role tagged individually for dashboard filtering
-- Added **new trigger prototypes**:
+- Added **new trigger prototypes** (existing v1.6 triggers remain unchanged):
   - Duplex mismatch detection
   - High discard rate detection
   - Broadcast storm detection
