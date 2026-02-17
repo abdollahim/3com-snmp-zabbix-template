@@ -219,7 +219,7 @@ zabbix_export:
                 - tag: component
                   value: metadata
 
-            # --- New item prototypes added in v1.7 ---
+            # --- New v1.7 item prototypes ---
             - uuid: 550e8400e29b41d4a716446655449911
               name: "Interface {#IFNAME}: VLAN"
               type: SNMP_AGENT
@@ -228,8 +228,98 @@ zabbix_export:
               delay: "1h"
               history: "15d"
               trends: "0"
-              tags:
-                - tag: vlan
-                  value: "{#IFNAME}"
-                - tag: component
-                  value: metadata
+
+            - uuid: 550e8400e29b41d4a716446655449912
+              name: "Interface {#IFNAME}: MTU"
+              type: SNMP_AGENT
+              key: "ifMtu[{#IFINDEX}]"
+              snmp_oid: "ifMtu.{#IFINDEX}"
+              delay: "1h"
+              history: "15d"
+              trends: "0"
+
+            - uuid: 550e8400e29b41d4a716446655449913
+              name: "Interface {#IFNAME}: duplex"
+              type: SNMP_AGENT
+              key: "ifDuplex[{#IFINDEX}]"
+              snmp_oid: "ifDuplex.{#IFINDEX}"
+              delay: "1h"
+              history: "15d"
+              trends: "0"
+
+            - uuid: 550e8400e29b41d4a716446655449914
+              name: "Interface {#IFNAME}: input discards"
+              type: SNMP_AGENT
+              key: "ifInDiscards[{#IFINDEX}]"
+              snmp_oid: "ifInDiscards.{#IFINDEX}"
+              delay: "5m"
+              history: "15d"
+              trends: "90d"
+
+            - uuid: 550e8400e29b41d4a716446655449915
+              name: "Interface {#IFNAME}: output discards"
+              type: SNMP_AGENT
+              key: "ifOutDiscards[{#IFINDEX}]"
+              snmp_oid: "ifOutDiscards.{#IFINDEX}"
+              delay: "5m"
+              history: "15d"
+              trends: "90d"
+
+            - uuid: 550e8400e29b41d4a716446655449916
+              name: "Interface {#IFNAME}: input broadcasts"
+              type: SNMP_AGENT
+              key: "ifInBroadcastPkts[{#IFINDEX}]"
+              snmp_oid: "ifInBroadcastPkts.{#IFINDEX}"
+              delay: "5m"
+              history: "15d"
+              trends: "90d"
+
+            - uuid: 550e8400e29b41d4a716446655449917
+              name: "Interface {#IFNAME}: output broadcasts"
+              type: SNMP_AGENT
+              key: "ifOutBroadcastPkts[{#IFINDEX}]"
+              snmp_oid: "ifOutBroadcastPkts.{#IFINDEX}"
+              delay: "5m"
+              history: "15d"
+              trends: "90d"
+
+          trigger_prototypes:
+            # --- Existing triggers from v1.6 ---
+            - uuid: 550e8400e29b41d4a716446655449920
+              name: "Interface {#IFNAME} is DOWN"
+              expression: >
+                last(/3Com 242x SNMP LLD Base/ifOperStatus[{#IFINDEX}])<>1
+                and
+                last(/3Com 242x SNMP LLD Base/ifAdminStatus[{#IFINDEX}])=1
+              priority: AVERAGE
+
+            - uuid: 550e8400e29b41d4a716446655449921
+              name: "Interface {#IFNAME} utilization >{$IF_UTIL_WARN}"
+              expression: "last(/3Com 242x SNMP LLD Base/if.util.smoothed[{#IFINDEX}])>{$IF_UTIL_WARN}"
+              priority: WARNING
+
+            - uuid: 550e8400e29b41d4a716446655449922
+              name: "Interface {#IFNAME} utilization >{$IF_UTIL_HIGH}"
+              expression: "last(/3Com 242x SNMP LLD Base/if.util.smoothed[{#IFINDEX}])>{$IF_UTIL_HIGH}"
+              priority: HIGH
+
+            - uuid: 550e8400e29b41d4a716446655449923
+              name: "Interface {#IFNAME} sustained error rate"
+              expression: "change(/3Com 242x SNMP LLD Base/ifInErrors[{#IFINDEX}])>{$IF_ERROR_RATE} or change(/3Com 242x SNMP LLD Base/ifOutErrors[{#IFINDEX}])>{$IF_ERROR_RATE}"
+              priority: WARNING
+
+            # --- New triggers added in v1.7 ---
+            - uuid: 550e8400e29b41d4a716446655449924
+              name: "Interface {#IFNAME} duplex mismatch"
+              expression: "last(/3Com 242x SNMP LLD Base/ifDuplex[{#IFINDEX}])=2 and last(/3Com 242x SNMP LLD Base/ifSpeed[{#IFINDEX}])>=100000000"
+              priority: WARNING
+
+            - uuid: 550e8400e29b41d4a716446655449925
+              name: "Interface {#IFNAME} high discard rate"
+              expression: "change(/3Com 242x SNMP LLD Base/ifInDiscards[{#IFINDEX}])>{$IF_DISCARD_RATE} or change(/3Com 242x SNMP LLD Base/ifOutDiscards[{#IFINDEX}])>{$IF_DISCARD_RATE}"
+              priority: WARNING
+
+            - uuid: 550e8400e29b41d4a716446655449926
+              name: "Interface {#IFNAME} broadcast storm"
+              expression: "last(/3Com 242x SNMP LLD Base/ifInBroadcastPkts[{#IFINDEX}])>{$BROADCAST_STORM}"
+              priority: HIGH
