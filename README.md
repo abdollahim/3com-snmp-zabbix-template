@@ -1,0 +1,1 @@
+# 3com-snmp-zabbix-template
