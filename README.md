@@ -1,33 +1,44 @@
 # 3Com 242x SNMP LLD Template for Zabbix
 
-**Version:** 1.6  
-**Compatibility:** Zabbix 7.4+  
+**Version:** 1.9  
+**Compatibility:** Zabbix 7.4+ (tested on 8.x)  
 **Author:** Majid Abdollahi  
 
 ---
 
 ## Overview
 
-This template provides **production-ready LLD monitoring** for 3Com 242x switches:
+This template provides **production‑ready LLD monitoring** for 3Com 242x switches with extended reliability, KPI, and SLA‑oriented metrics.
 
-- Fully **LLD interface discovery** (items & triggers auto-created per interface)
-- Monitors **traffic, speed, utilization, input/output errors, admin/oper status**
-- Supports **multi-tier uplink detection** (`uplink-100M`, `uplink-1G`, `uplink-10G`, `access`)
-- Includes **per-interface macros** for easy threshold tuning
-- Uses **structured tags** for filtering, dashboards, and alert actions
-- Optional VLAN monitoring per interface
+### Key capabilities
+- Fully **LLD interface discovery** (items & triggers auto‑created per interface)
+- Monitors **traffic, speed, utilization, errors, discards, CRC, collisions**
+- Supports **broadcast/multicast counters** with configurable thresholds
+- Includes **queue drop monitoring**, **latency calculation**, and **SLA compliance KPI**
+- Multi‑tier **uplink role detection** (`uplink-100M`, `uplink-1G`, `uplink-10G`, `access`)
+- VLAN, MTU, duplex, and metadata collection with enhanced tagging
 - **Smoothed utilization** to avoid false spike alerts
-- Optimized **history/trends** settings to reduce DB load
+- Optimized **history/trends** for DB efficiency
+- Prebuilt **dashboard‑friendly tags** for filtering and alerting
+- Fully validated for **Zabbix 7.4**, tested on **Zabbix 8.x**
 
 ---
 
 ## Macros
 
-| Macro             | Default | Description                               |
-|------------------|--------|-------------------------------------------|
-| `{$IF_UTIL_WARN}` | 80     | Utilization warning threshold (%)         |
-| `{$IF_UTIL_HIGH}` | 90     | Utilization critical threshold (%)        |
-| `{$IF_ERROR_RATE}`| 10     | Error rate threshold for sustained errors |
+| Macro                        | Default | Description                                           |
+|------------------------------|---------|-------------------------------------------------------|
+| `{$IF_UTIL_WARN}`            | 80      | Utilization warning threshold (%)                     |
+| `{$IF_UTIL_HIGH}`            | 90      | Utilization critical threshold (%)                    |
+| `{$IF_ERROR_RATE}`           | 10      | Sustained error threshold                             |
+| `{$IF_DISCARD_RATE}`         | 10      | Discard rate threshold                                |
+| `{$BROADCAST_STORM}`         | 1000    | Broadcast storm threshold                             |
+| `{$IF_CRC_THRESHOLD}`        | 10      | CRC error spike threshold                             |
+| `{$IF_COLLISION_THRESHOLD}`  | 5       | Collision anomaly threshold                           |
+| `{$IF_ERROR_PCT_WARN}`       | 5       | Error/discard percentage warning threshold            |
+| `{$IF_QUEUE_DROP_THRESHOLD}` | 10      | Queue drop anomaly threshold                          |
+| `{$IF_LATENCY_WARN}`         | 50      | Latency warning threshold (ms)                        |
+| `{$IF_SLA_MIN}`              | 95      | Minimum acceptable SLA (%)                            |
 
 ---
 
@@ -43,72 +54,87 @@ This template provides **production-ready LLD monitoring** for 3Com 242x switche
 
 ---
 
-## Item Prototypes
+## Item Prototypes (Summary)
 
-| Item Name                       | Key                          | Type          | Description                               | Tags                                 | History/Trends |
-|--------------------------------|------------------------------|--------------|-------------------------------------------|-------------------------------------|----------------|
-| Interface {#IFNAME}: description| ifAlias[{#IFINDEX}]          | SNMP_AGENT   | Interface description (from SNMP ifAlias)| interface, component:metadata        | 30d / 0        |
-| Interface {#IFNAME}: operational status | ifOperStatus[{#IFINDEX}] | SNMP_AGENT | Up/Down status | interface, component:status | 15d / 0 |
-| Interface {#IFNAME}: admin status | ifAdminStatus[{#IFINDEX}]  | SNMP_AGENT   | Admin Up/Down status                       | interface, component:status        | 15d / 0        |
-| Interface {#IFNAME}: speed      | ifSpeed[{#IFINDEX}]          | SNMP_AGENT   | Interface speed (bps)                      | interface, component:performance   | 15d / 90d      |
-| Interface {#IFNAME}: incoming traffic | ifInOctets[{#IFINDEX}] | SNMP_AGENT | Incoming traffic in bps                     | direction:in, component:performance| 15d / 90d      |
-| Interface {#IFNAME}: outgoing traffic | ifOutOctets[{#IFINDEX}] | SNMP_AGENT | Outgoing traffic in bps                     | direction:out, component:performance| 15d / 90d      |
-| Interface {#IFNAME}: utilization smoothed | if.util.smoothed[{#IFINDEX}] | CALCULATED | Interface utilization (%) smoothed          | interface, component:performance    | 15d / 90d      |
-| Interface {#IFNAME}: input errors | ifInErrors[{#IFINDEX}]     | SNMP_AGENT   | Input errors / sec                          | interface, direction:in, component:reliability | 15d / 90d |
-| Interface {#IFNAME}: output errors | ifOutErrors[{#IFINDEX}]   | SNMP_AGENT   | Output errors / sec                         | interface, direction:out, component:reliability | 15d / 90d |
-| Interface {#IFNAME}: role       | ifRole[{#IFINDEX}]           | CALCULATED   | Port role based on speed (uplink-100M / uplink-1G / uplink-10G / access) | interface, role, component:metadata | 15d / 0 |
+| Item Name                       | Key                                | Type        | Description                                   |
+|--------------------------------|------------------------------------|-------------|-----------------------------------------------|
+| Description                    | `ifAlias[{#IFINDEX}]`              | SNMP        | Interface description                          |
+| Oper/Admin status              | `ifOperStatus`, `ifAdminStatus`    | SNMP        | Up/Down state                                  |
+| Speed                          | `ifSpeed[{#IFINDEX}]`              | SNMP        | Interface speed                                |
+| Traffic (in/out)               | `ifInOctets`, `ifOutOctets`        | SNMP        | bps with preprocessing                         |
+| Utilization (smoothed)         | `if.util.smoothed`                 | CALCULATED  | Smoothed utilization (%)                       |
+| Errors (in/out)                | `ifInErrors`, `ifOutErrors`        | SNMP        | Errors per second                              |
+| Discards (in/out)              | `ifInDiscards`, `ifOutDiscards`    | SNMP        | Discards per second                            |
+| CRC errors                     | `ifInCrcErrors`                    | SNMP        | CRC error counter                              |
+| Collisions                     | `ifCollisions`                     | SNMP        | Collision counter                              |
+| Broadcast/Multicast counters   | `ifInBroadcastPkts`, `ifOutBroadcastPkts`, `ifInMulticastPkts`, `ifOutMulticastPkts` | SNMP | L2 anomaly detection |
+| Queue drops                    | `ifQueueDrops`                     | SNMP        | Queue drop counter                             |
+| Latency                        | `ifLatency`                        | CALCULATED  | Basic latency estimation                       |
+| SLA compliance                 | `ifSLA`                            | CALCULATED  | SLA % based on errors/discards                 |
+| Error/discard % KPI            | `ifErrorDiscardPct`                | CALCULATED  | Reliability KPI                                |
+| Role                           | `ifRole`                           | CALCULATED  | Uplink/access classification                    |
+| VLAN / MTU / Duplex            | `ifVlan`, `ifMtu`, `ifDuplex`      | SNMP        | Interface metadata                             |
 
 ---
 
-## Trigger Prototypes
+## Trigger Prototypes (Summary)
 
-| Trigger Name                               | Expression                                                                                  | Priority | Description                                |
-|-------------------------------------------|--------------------------------------------------------------------------------------------|----------|--------------------------------------------|
-| Interface {#IFNAME} is DOWN               | `last(/3Com 242x SNMP LLD Base/ifOperStatus[{#IFINDEX}])<>1 and last(/3Com 242x SNMP LLD Base/ifAdminStatus[{#IFINDEX}])=1` | AVERAGE  | Triggers when interface is down but admin up |
-| Interface {#IFNAME} utilization >{$IF_UTIL_WARN} | `last(/3Com 242x SNMP LLD Base/if.util.smoothed[{#IFINDEX}])>{$IF_UTIL_WARN}`                       | WARNING  | Trigger for utilization warning            |
-| Interface {#IFNAME} utilization >{$IF_UTIL_HIGH} | `last(/3Com 242x SNMP LLD Base/if.util.smoothed[{#IFINDEX}])>{$IF_UTIL_HIGH}`                      | HIGH     | Trigger for utilization critical           |
-| Interface {#IFNAME} sustained error rate  | `(change(/3Com 242x SNMP LLD Base/ifInErrors[{#IFINDEX}],#2)>{$IF_ERROR_RATE}) or (change(/3Com 242x SNMP LLD Base/ifOutErrors[{#IFINDEX}],#2)>{$IF_ERROR_RATE})` | WARNING  | Trigger for sustained errors on interface |
+| Trigger Name                                | Description                                   | Priority |
+|---------------------------------------------|-----------------------------------------------|----------|
+| Interface DOWN                              | Admin up but oper down                        | AVERAGE  |
+| Utilization > warn/high                     | Smoothed utilization                           | WARNING / HIGH |
+| Sustained error rate                        | Based on `{$IF_ERROR_RATE}`                   | WARNING  |
+| High discard rate                           | Based on `{$IF_DISCARD_RATE}`                 | WARNING  |
+| Duplex mismatch                             | Wrong duplex at high speed                    | WARNING  |
+| Broadcast storm                             | Based on `{$BROADCAST_STORM}`                 | HIGH     |
+| Multicast anomaly                           | Sudden multicast spike                        | WARNING  |
+| CRC error spike                             | Based on `{$IF_CRC_THRESHOLD}`                | WARNING  |
+| Collision anomaly                           | Based on `{$IF_COLLISION_THRESHOLD}`          | INFO     |
+| Error/discard % > threshold                 | KPI‑based reliability alert                   | WARNING  |
+| Queue drop anomaly                          | Based on `{$IF_QUEUE_DROP_THRESHOLD}`         | WARNING  |
+| Latency > threshold                         | Based on `{$IF_LATENCY_WARN}`                 | WARNING  |
+| SLA < minimum                               | Based on `{$IF_SLA_MIN}`                      | HIGH     |
 
 ---
 
 ## Tags
 
-- **interface:** {#IFNAME}  
-- **direction:** in/out (for traffic/errors)  
-- **component:** metadata / status / performance / reliability  
-- **role:** uplink-100M / uplink-1G / uplink-10G / access  
+- **interface:** `{#IFNAME}`
+- **direction:** in / out
+- **component:** metadata / status / performance / reliability / kpi
+- **role:** uplink‑100M / uplink‑1G / uplink‑10G / access
 
 ---
 
 ## Features Summary
 
-- Fully **LLD**: no per-port duplication  
-- Supports **multi-tier uplink detection**  
-- Includes **sustained error triggers**  
-- Smoothed utilization to avoid false spikes  
-- Uses **per-interface macros** for flexible thresholds  
-- Optimized **history/trends** settings  
-- Zabbix **7.4-compatible YAML**  
-- Production-ready for **3Com 242x switches**  
+- Fully **LLD** (no manual per‑port configuration)
+- Multi‑tier **uplink detection**
+- Broadcast, multicast, CRC, collision, discard, queue drop monitoring
+- KPI‑based metrics: **error/discard %, SLA, latency**
+- Dashboard‑friendly tagging
+- Optimized history/trends for performance
+- Zabbix **7.4+ compatible**, tested on **8.x**
 
 ---
 
 ## Usage Instructions
 
-1. Import the `3Com_242x_SNMP_LLD_Base_v1.6.yaml` template into Zabbix 7.4.
-2. Assign the template to any 3Com 242x switch hosts.
-3. Adjust macros if needed (`{$IF_UTIL_WARN}`, `{$IF_UTIL_HIGH}`, `{$IF_ERROR_RATE}`).
-4. Monitor discovered interfaces automatically.
-5. Use tags to filter dashboards or set alert actions.
+1. Import the latest template YAML (`3Com_242x_SNMP_LLD_Base_v1.9.yaml`) into Zabbix.
+2. Assign the template to any 3Com 242x switch host.
+3. Adjust macros as needed for your environment.
+4. Interfaces will be discovered automatically.
+5. Use tags for dashboards, filtering, and alert routing.
 
 ---
 
 ## Notes
 
-- Template is **fully LLD**, scalable to any number of ports.
-- Role detection automatically assigns **uplink-100M, uplink-1G, uplink-10G, or access**.
-- Smoothed utilization calculation reduces false alerts on traffic spikes.
-- All triggers and items are automatically generated per interface.
+- Template is fully LLD and scales to any number of ports.
+- Role detection automatically assigns uplink/access categories.
+- Smoothed utilization reduces false alerts.
+- KPI‑based triggers provide deeper reliability insights.
+- All items and triggers are auto‑generated per interface.
 
 ---
 
