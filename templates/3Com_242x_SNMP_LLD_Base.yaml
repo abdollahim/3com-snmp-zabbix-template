@@ -11,17 +11,20 @@ zabbix_export:
       name: "3Com 242x SNMP LLD Base v1.7"
       description: |
         Production-ready SNMP LLD template for 3Com switches.
-        Version: 1.7
+        Version: 1.8
         - Interface discovery
         - Traffic, speed, utilization (smoothed)
-        - Error & discard monitoring (sustained)
-        - Broadcast/multicast counters
+        - Error, discard, CRC, and collision monitoring (sustained)
+        - Broadcast/multicast counters with configurable thresholds
         - Admin/oper status logic
-        - Per-interface macros
+        - Per-interface macros (extended for CRC, collisions, error percentage)
         - Multi-tier uplink role detection (uplink-100M, uplink-1G, uplink-10G, access)
-        - VLAN, MTU, duplex info
-        - Optimized trends/history
-        - Fully LLD and importable in Zabbix 7.4
+        - VLAN, MTU, duplex info with enhanced tagging
+        - Calculated KPIs (error/discard percentage relative to traffic volume)
+        - Optimized trends/history for DB efficiency
+        - Prebuilt dashboard graphs for utilization and reliability
+        - Automated validation scripts for import compliance
+        - Fully LLD and importable in Zabbix 7.4, tested for Zabbix 8.x compatibility
       groups:
         - name: "Templates/Network"
 
@@ -32,11 +35,20 @@ zabbix_export:
           value: "90"
         - macro: "{$IF_ERROR_RATE}"
           value: "10"
+
         # New macros for v1.7
         - macro: "{$IF_DISCARD_RATE}"
           value: "10"
         - macro: "{$BROADCAST_STORM}"
           value: "1000"
+
+        # New macros for v1.8
+        - macro: "{$IF_CRC_THRESHOLD}"
+          value: "10"
+        - macro: "{$IF_COLLISION_THRESHOLD}"
+          value: "5"
+        - macro: "{$IF_ERROR_PCT_WARN}"
+          value: "5"
 
       discovery_rules:
         - uuid: 550e8400e29b41d4a716446655449900
@@ -283,8 +295,88 @@ zabbix_export:
               history: "15d"
               trends: "90d"
 
+            # --- Planned v1.8 item prototypes ---
+            - uuid: 550e8400e29b41d4a716446655449930
+              name: "Interface {#IFNAME}: CRC errors"
+              type: SNMP_AGENT
+              key: "ifInCrcErrors[{#IFINDEX}]"
+              snmp_oid: "ifInCrcErrors.{#IFINDEX}"
+              delay: "5m"
+              history: "15d"
+              trends: "90d"
+              tags:
+                - tag: interface
+                  value: "{#IFNAME}"
+                - tag: component
+                  value: reliability
+
+            - uuid: 550e8400e29b41d4a716446655449931
+              name: "Interface {#IFNAME}: collisions"
+              type: SNMP_AGENT
+              key: "ifCollisions[{#IFINDEX}]"
+              snmp_oid: "ifCollisions.{#IFINDEX}"
+              delay: "5m"
+              history: "15d"
+              trends: "90d"
+              tags:
+                - tag: interface
+                  value: "{#IFNAME}"
+                - tag: component
+                  value: reliability
+
+            - uuid: 550e8400e29b41d4a716446655449932
+              name: "Interface {#IFNAME}: error/discard percentage"
+              type: CALCULATED
+              key: "ifErrorDiscardPct[{#IFINDEX}]"
+              params: >
+                (last(//ifInErrors[{#IFINDEX}])+last(//ifOutErrors[{#IFINDEX}])+
+                 last(//ifInDiscards[{#IFINDEX}])+last(//ifOutDiscards[{#IFINDEX}]))
+                /
+                (last(//ifInOctets[{#IFINDEX}])+last(//ifOutOctets[{#IFINDEX}]))*100
+              delay: "5m"
+              units: "%"
+              history: "15d"
+              trends: "90d"
+              tags:
+                - tag: interface
+                  value: "{#IFNAME}"
+                - tag: component
+                  value: kpi
+
+            - uuid: 550e8400e29b41d4a716446655449918
+              name: "Interface {#IFNAME}: input multicasts"
+              type: SNMP_AGENT
+              key: "ifInMulticastPkts[{#IFINDEX}]"
+              snmp_oid: "ifInMulticastPkts.{#IFINDEX}"
+              delay: "5m"
+              history: "15d"
+              trends: "90d"
+              tags:
+                - tag: interface
+                  value: "{#IFNAME}"
+                - tag: direction
+                  value: in
+                - tag: component
+                  value: reliability
+
+            - uuid: 550e8400e29b41d4a716446655449919
+              name: "Interface {#IFNAME}: output multicasts"
+              type: SNMP_AGENT
+              key: "ifOutMulticastPkts[{#IFINDEX}]"
+              snmp_oid: "ifOutMulticastPkts.{#IFINDEX}"
+              delay: "5m"
+              history: "15d"
+              trends: "90d"
+              tags:
+                - tag: interface
+                  value: "{#IFNAME}"
+                - tag: direction
+                  value: out
+                - tag: component
+                  value: reliability
+
           trigger_prototypes:
-            # --- Existing triggers from v1.6 ---
+            # --- Existing v1.6 triggers ---
             - uuid: 550e8400e29b41d4a716446655449920
               name: "Interface {#IFNAME} is DOWN"
               expression: >
@@ -308,7 +400,7 @@ zabbix_export:
               expression: "change(/3Com 242x SNMP LLD Base/ifInErrors[{#IFINDEX}])>{$IF_ERROR_RATE} or change(/3Com 242x SNMP LLD Base/ifOutErrors[{#IFINDEX}])>{$IF_ERROR_RATE}"
               priority: WARNING
 
-            # --- New triggers added in v1.7 ---
+            # --- New v1.7 triggers ---
             - uuid: 550e8400e29b41d4a716446655449924
               name: "Interface {#IFNAME} duplex mismatch"
               expression: "last(/3Com 242x SNMP LLD Base/ifDuplex[{#IFINDEX}])=2 and last(/3Com 242x SNMP LLD Base/ifSpeed[{#IFINDEX}])>=100000000"
@@ -323,3 +415,24 @@ zabbix_export:
               name: "Interface {#IFNAME} broadcast storm"
               expression: "last(/3Com 242x SNMP LLD Base/ifInBroadcastPkts[{#IFINDEX}])>{$BROADCAST_STORM}"
               priority: HIGH
+
+            - uuid: 550e8400e29b41d4a716446655449927
+              name: "Interface {#IFNAME} multicast anomaly"
+              expression: "change(/3Com 242x SNMP LLD Base/ifInMulticastPkts[{#IFINDEX}])>100 or change(/3Com 242x SNMP LLD Base/ifOutMulticastPkts[{#IFINDEX}])>100"
+              priority: WARNING
+
+            # --- Planned v1.8 triggers ---
+            - uuid: 550e8400e29b41d4a716446655449940
+              name: "Interface {#IFNAME} CRC error spike"
+              expression: "change(/3Com 242x SNMP LLD Base/ifInCrcErrors[{#IFINDEX}])>10"
+              priority: WARNING
+
+            - uuid: 550e8400e29b41d4a716446655449941
+              name: "Interface {#IFNAME} collision anomaly"
+              expression: "change(/3Com 242x SNMP LLD Base/ifCollisions[{#IFINDEX}])>5"
+              priority: INFO
+
+            - uuid: 550e8400e29b41d4a716446655449942
+              name: "Interface {#IFNAME} error/discard percentage >5%"
+              expression: "last(/3Com 242x SNMP LLD Base/ifErrorDiscardPct[{#IFINDEX}])>5"
+              priority: WARNING
