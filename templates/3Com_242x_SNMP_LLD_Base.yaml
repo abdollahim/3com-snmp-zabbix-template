@@ -1,0 +1,245 @@
+zabbix_export:
+  version: '7.4'
+
+  template_groups:
+    - uuid: 36f8c7b12a6b4d3e9bfa1a2b3c4d5e6f
+      name: 'Templates/Network'
+
+  templates:
+    - uuid: 550e8400e29b41d4a716446655449999
+      template: '3Com 242x SNMP LLD Base'
+      name: '3Com 242x SNMP LLD Base v1.6'
+      description: |
+        Production-ready SNMP LLD template for 3Com switches.
+        Version: 1.6
+        - Interface discovery
+        - Traffic, speed, utilization (smoothed)
+        - Error monitoring (sustained)
+        - Admin/oper status logic
+        - Per-interface macros
+        - Multi-tier uplink role detection (uplink-100M, uplink-1G, uplink-10G, access)
+        - VLAN & description info
+        - Optimized trends/history
+        - Fully LLD and importable in Zabbix 7.4
+      groups:
+        - name: 'Templates/Network'
+
+      macros:
+        - macro: '{$IF_UTIL_WARN}'
+          value: '80'
+        - macro: '{$IF_UTIL_HIGH}'
+          value: '90'
+        - macro: '{$IF_ERROR_RATE}'
+          value: '10'
+
+      discovery_rules:
+        - uuid: 550e8400e29b41d4a716446655449900
+          name: 'Interface discovery'
+          type: SNMP_AGENT
+          key: if.discovery
+          snmp_oid: 'discovery[{#IFINDEX},ifIndex,{#IFNAME},ifDescr]'
+          delay: '1h'
+
+          filter:
+            conditions:
+              - macro: '{#IFNAME}'
+                operator: NOT_MATCHES_REGEX
+                value: '^(lo|Loopback|Vlan|Null)'
+
+          item_prototypes:
+            - uuid: 550e8400e29b41d4a716446655449901
+              name: 'Interface {#IFNAME}: description'
+              type: SNMP_AGENT
+              key: 'ifAlias[{#IFINDEX}]'
+              snmp_oid: 'ifAlias.{#IFINDEX}'
+              delay: '1h'
+              history: '30d'
+              trends: '0'
+              tags:
+                - tag: interface
+                  value: '{#IFNAME}'
+                - tag: component
+                  value: metadata
+
+            - uuid: 550e8400e29b41d4a716446655449902
+              name: 'Interface {#IFNAME}: operational status'
+              type: SNMP_AGENT
+              key: 'ifOperStatus[{#IFINDEX}]'
+              snmp_oid: 'ifOperStatus.{#IFINDEX}'
+              delay: '2m'
+              value_type: UNSIGNED
+              history: '15d'
+              trends: '0'
+              tags:
+                - tag: interface
+                  value: '{#IFNAME}'
+                - tag: component
+                  value: status
+
+            - uuid: 550e8400e29b41d4a716446655449903
+              name: 'Interface {#IFNAME}: admin status'
+              type: SNMP_AGENT
+              key: 'ifAdminStatus[{#IFINDEX}]'
+              snmp_oid: 'ifAdminStatus.{#IFINDEX}'
+              delay: '5m'
+              value_type: UNSIGNED
+              history: '15d'
+              trends: '0'
+              tags:
+                - tag: interface
+                  value: '{#IFNAME}'
+                - tag: component
+                  value: status
+
+            - uuid: 550e8400e29b41d4a716446655449904
+              name: 'Interface {#IFNAME}: speed'
+              type: SNMP_AGENT
+              key: 'ifSpeed[{#IFINDEX}]'
+              snmp_oid: 'ifSpeed.{#IFINDEX}'
+              delay: '1h'
+              units: bps
+              history: '15d'
+              trends: '90d'
+              tags:
+                - tag: interface
+                  value: '{#IFNAME}'
+                - tag: component
+                  value: performance
+
+            - uuid: 550e8400e29b41d4a716446655449905
+              name: 'Interface {#IFNAME}: incoming traffic'
+              type: SNMP_AGENT
+              key: 'ifInOctets[{#IFINDEX}]'
+              snmp_oid: 'ifInOctets.{#IFINDEX}'
+              delay: '2m'
+              units: bps
+              history: '15d'
+              trends: '90d'
+              preprocessing:
+                - type: CHANGE_PER_SECOND
+                - type: MULTIPLIER
+                  parameters: ['8']
+              tags:
+                - tag: direction
+                  value: in
+                - tag: component
+                  value: performance
+
+            - uuid: 550e8400e29b41d4a716446655449906
+              name: 'Interface {#IFNAME}: outgoing traffic'
+              type: SNMP_AGENT
+              key: 'ifOutOctets[{#IFINDEX}]'
+              snmp_oid: 'ifOutOctets.{#IFINDEX}'
+              delay: '2m'
+              units: bps
+              history: '15d'
+              trends: '90d'
+              preprocessing:
+                - type: CHANGE_PER_SECOND
+                - type: MULTIPLIER
+                  parameters: ['8']
+              tags:
+                - tag: direction
+                  value: out
+                - tag: component
+                  value: performance
+
+            - uuid: 550e8400e29b41d4a716446655449907
+              name: 'Interface {#IFNAME}: utilization smoothed'
+              type: CALCULATED
+              key: 'if.util.smoothed[{#IFINDEX}]'
+              params: >
+                avg(100*(last(//ifInOctets[{#IFINDEX}])+last(//ifOutOctets[{#IFINDEX}]))/
+                last(//ifSpeed[{#IFINDEX}]),3)
+              delay: '2m'
+              units: '%'
+              history: '15d'
+              trends: '90d'
+              tags:
+                - tag: interface
+                  value: '{#IFNAME}'
+                - tag: component
+                  value: performance
+
+            - uuid: 550e8400e29b41d4a716446655449908
+              name: 'Interface {#IFNAME}: input errors'
+              type: SNMP_AGENT
+              key: 'ifInErrors[{#IFINDEX}]'
+              snmp_oid: 'ifInErrors.{#IFINDEX}'
+              delay: '5m'
+              history: '15d'
+              trends: '90d'
+              preprocessing:
+                - type: CHANGE_PER_SECOND
+              tags:
+                - tag: interface
+                  value: '{#IFNAME}'
+                - tag: direction
+                  value: in
+                - tag: component
+                  value: reliability
+
+            - uuid: 550e8400e29b41d4a716446655449909
+              name: 'Interface {#IFNAME}: output errors'
+              type: SNMP_AGENT
+              key: 'ifOutErrors[{#IFINDEX}]'
+              snmp_oid: 'ifOutErrors.{#IFINDEX}'
+              delay: '5m'
+              history: '15d'
+              trends: '90d'
+              preprocessing:
+                - type: CHANGE_PER_SECOND
+              tags:
+                - tag: interface
+                  value: '{#IFNAME}'
+                - tag: direction
+                  value: out
+                - tag: component
+                  value: reliability
+
+            - uuid: 550e8400e29b41d4a716446655449910
+              name: 'Interface {#IFNAME}: role'
+              type: CALCULATED
+              key: 'ifRole[{#IFINDEX}]'
+              params: >
+                if(last(//ifSpeed[{#IFINDEX}])>=10000000000,'uplink-10G',
+                if(last(//ifSpeed[{#IFINDEX}])>=1000000000,'uplink-1G',
+                if(last(//ifSpeed[{#IFINDEX}])>=100000000,'uplink-100M','access')))
+              delay: '1h'
+              value_type: CHAR
+              history: '15d'
+              trends: '0'
+              tags:
+                - tag: interface
+                  value: '{#IFNAME}'
+                - tag: role
+                  value: '{#VALUE}'
+                - tag: component
+                  value: metadata
+
+          trigger_prototypes:
+            - uuid: 550e8400e29b41d4a716446655449920
+              name: 'Interface {#IFNAME} is DOWN'
+              expression: >
+                last(/3Com 242x SNMP LLD Base/ifOperStatus[{#IFINDEX}])<>1
+                and
+                last(/3Com 242x SNMP LLD Base/ifAdminStatus[{#IFINDEX}])=1
+              priority: AVERAGE
+
+            - uuid: 550e8400e29b41d4a716446655449921
+              name: 'Interface {#IFNAME} utilization >{$IF_UTIL_WARN}'
+              expression: 'last(/3Com 242x SNMP LLD Base/if.util.smoothed[{#IFINDEX}])>{$IF_UTIL_WARN}'
+              priority: WARNING
+
+            - uuid: 550e8400e29b41d4a716446655449922
+              name: 'Interface {#IFNAME} utilization >{$IF_UTIL_HIGH}'
+              expression: 'last(/3Com 242x SNMP LLD Base/if.util.smoothed[{#IFINDEX}])>{$IF_UTIL_HIGH}'
+              priority: HIGH
+
+            - uuid: 550e8400e29b41d4a716446655449923
+              name: 'Interface {#IFNAME} sustained error rate'
+              expression: >
+                (change(/3Com 242x SNMP LLD Base/ifInErrors[{#IFINDEX}],#2)>{$IF_ERROR_RATE})
+                or
+                (change(/3Com 242x SNMP LLD Base/ifOutErrors[{#IFINDEX}],#2)>{$IF_ERROR_RATE})
+              priority: WARNING
