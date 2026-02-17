@@ -8,21 +8,23 @@ zabbix_export:
   templates:
     - uuid: 550e8400e29b41d4a716446655449999
       template: "3Com 242x SNMP LLD Base"
-      name: "3Com 242x SNMP LLD Base v1.7"
+      name: "3Com 242x SNMP LLD Base v1.9"
       description: |
         Production-ready SNMP LLD template for 3Com switches.
-        Version: 1.8
+        Version: 1.9
         - Interface discovery
         - Traffic, speed, utilization (smoothed)
         - Error, discard, CRC, and collision monitoring (sustained)
         - Broadcast/multicast counters with configurable thresholds
         - Admin/oper status logic
-        - Per-interface macros (extended for CRC, collisions, error percentage)
+        - Per-interface macros (extended for CRC, collisions, error percentage, queue drops, latency, SLA)
         - Multi-tier uplink role detection (uplink-100M, uplink-1G, uplink-10G, access)
         - VLAN, MTU, duplex info with enhanced tagging
-        - Calculated KPIs (error/discard percentage relative to traffic volume)
+        - Calculated KPIs (error/discard percentage relative to traffic volume, SLA compliance)
+        - Queue drop monitoring for reliability
+        - Latency calculation per interface
         - Optimized trends/history for DB efficiency
-        - Prebuilt dashboard graphs for utilization and reliability
+        - Prebuilt dashboard graphs for utilization, reliability, and SLA metrics
         - Automated validation scripts for import compliance
         - Fully LLD and importable in Zabbix 7.4, tested for Zabbix 8.x compatibility
       groups:
@@ -49,6 +51,14 @@ zabbix_export:
           value: "5"
         - macro: "{$IF_ERROR_PCT_WARN}"
           value: "5"
+
+        # New macros for v1.9
+        - macro: "{$IF_QUEUE_DROP_THRESHOLD}"
+          value: "10"
+        - macro: "{$IF_LATENCY_WARN}"
+          value: "50"
+        - macro: "{$IF_SLA_MIN}"
+          value: "95"
 
       discovery_rules:
         - uuid: 550e8400e29b41d4a716446655449900
@@ -375,6 +385,53 @@ zabbix_export:
                 - tag: component
                   value: reliability
 
+            # --- Planned v1.9 item prototypes ---
+            - uuid: 550e8400e29b41d4a716446655449950
+              name: "Interface {#IFNAME}: queue drops"
+              type: SNMP_AGENT
+              key: "ifQueueDrops[{#IFINDEX}]"
+              snmp_oid: "ifQueueDrops.{#IFINDEX}"
+              delay: "5m"
+              history: "15d"
+              trends: "90d"
+              tags:
+                - tag: interface
+                  value: "{#IFNAME}"
+                - tag: component
+                  value: reliability
+
+            - uuid: 550e8400e29b41d4a716446655449951
+              name: "Interface {#IFNAME}: latency (ms)"
+              type: CALCULATED
+              key: "ifLatency[{#IFINDEX}]"
+              params: >
+                (last(//ifOutOctets[{#IFINDEX}]) - last(//ifInOctets[{#IFINDEX}]))/1000
+              delay: "5m"
+              units: "ms"
+              history: "15d"
+              trends: "90d"
+              tags:
+                - tag: interface
+                  value: "{#IFNAME}"
+                - tag: component
+                  value: performance
+
+            - uuid: 550e8400e29b41d4a716446655449952
+              name: "Interface {#IFNAME}: SLA compliance"
+              type: CALCULATED
+              key: "ifSLA[{#IFINDEX}]"
+              params: >
+                100 - (last(//ifErrorDiscardPct[{#IFINDEX}]))
+              delay: "10m"
+              units: "%"
+              history: "30d"
+              trends: "90d"
+              tags:
+                - tag: interface
+                  value: "{#IFNAME}"
+                - tag: component
+                  value: kpi
+
           trigger_prototypes:
             # --- Existing v1.6 triggers ---
             - uuid: 550e8400e29b41d4a716446655449920
@@ -436,3 +493,19 @@ zabbix_export:
               name: "Interface {#IFNAME} error/discard percentage >5%"
               expression: "last(/3Com 242x SNMP LLD Base/ifErrorDiscardPct[{#IFINDEX}])>5"
               priority: WARNING
+
+            # --- Planned v1.9 triggers ---
+            - uuid: 550e8400e29b41d4a716446655449960
+              name: "Interface {#IFNAME} queue drop anomaly"
+              expression: "change(/3Com 242x SNMP LLD Base/ifQueueDrops[{#IFINDEX}])>10"
+              priority: WARNING
+
+            - uuid: 550e8400e29b41d4a716446655449961
+              name: "Interface {#IFNAME} latency >50ms"
+              expression: "last(/3Com 242x SNMP LLD Base/ifLatency[{#IFINDEX}])>50"
+              priority: WARNING
+
+            - uuid: 550e8400e29b41d4a716446655449962
+              name: "Interface {#IFNAME} SLA compliance <95%"
+              expression: "last(/3Com 242x SNMP LLD Base/ifSLA[{#IFINDEX}])<95"
+              priority: HIGH
