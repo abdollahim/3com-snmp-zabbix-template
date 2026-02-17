@@ -53,7 +53,7 @@ This project follows semantic versioning with incremental improvements.
 
 ---
 
-## v1.6 (Current)
+## v1.6
 - Finalized **production-ready template** for Zabbix 7.4.
 - Added **sustained error triggers** with configurable macro `{$IF_ERROR_RATE}`.
 - Optimized **history/trends** settings to reduce DB load.
@@ -71,3 +71,23 @@ This project follows semantic versioning with incremental improvements.
 
 ---
 
+## v1.7 (Current)
+- Added **new macros** for discard and broadcast thresholds:
+  - `{$IF_DISCARD_RATE}`
+  - `{$BROADCAST_STORM}`
+- Extended **item prototypes**:
+  - VLAN per interface (`ifVlan[{#IFINDEX}]`)
+  - MTU (`ifMtu[{#IFINDEX}]`)
+  - Duplex mode (`ifDuplex[{#IFINDEX}]`)
+  - Input/Output discards (`ifInDiscards`, `ifOutDiscards`)
+  - Broadcast counters (`ifInBroadcastPkts`, `ifOutBroadcastPkts`)
+  - Multicast counters (`ifInMulticastPkts`, `ifOutMulticastPkts`)
+- Reworked **role detection**:
+  - Split into separate calculated items for `uplink-10G`, `uplink-1G`, `uplink-100M`, and `access`
+  - Each role tagged individually for dashboard filtering
+- Added **new trigger prototypes**:
+  - Duplex mismatch detection
+  - High discard rate detection
+  - Broadcast storm detection
+- All new items and triggers assigned proper **UUIDs** for Zabbix import compatibility
+- Template fully validated and importable in **Zabbix 7.4**
