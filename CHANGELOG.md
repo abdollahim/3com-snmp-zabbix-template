@@ -53,8 +53,6 @@ This project follows semantic versioning with incremental improvements.
 
 ---
 
-# Changelog
-
 ## v1.6
 - Finalized **production-ready template** for Zabbix 7.4.
 - Added **sustained error triggers** with configurable macro `{$IF_ERROR_RATE}`.
