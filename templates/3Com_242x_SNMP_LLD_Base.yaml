@@ -10,10 +10,10 @@ zabbix_export:
   templates:
     - uuid: 550e8400e29b41d4a716446655449999
       template: "3Com 242x SNMP LLD Base"
-      name: "3Com 242x SNMP LLD Base v1.10.11"
+      name: "3Com 242x SNMP LLD Base v1.10.12"
       description: |
         Production‑ready SNMP Low‑Level Discovery (LLD) template for 3Com 242x series switches.
-        Version: 1.10.11
+        Version: 1.10.12
 
         This template provides comprehensive interface‑level monitoring with enhanced reliability,
         performance analytics, and SLA‑oriented KPIs. It is optimized for Zabbix 7.4 and validated
@@ -509,6 +509,31 @@ zabbix_export:
                 - tag: component
                   value: kpi
 
+            # PHASE 12 — Interface Health Classification (IHC)
+            - uuid: 550e8400e29b41d4a71644665544f310
+              name: "Interface {#IFNAME}: Health State"
+              type: CALCULATED
+              key: "ifHealthState[{#IFINDEX}]"
+              params: >
+                (
+                  (last(//ifQualityScore[{#IFINDEX}]) >= 80) * 1
+                  +
+                  ((last(//ifQualityScore[{#IFINDEX}]) < 80 and last(//ifQualityScore[{#IFINDEX}]) >= 50)) * 2
+                  +
+                  (last(//ifQualityScore[{#IFINDEX}]) < 50) * 3
+                )
+              delay: "5m"
+              value_type: UNSIGNED
+              history: "15d"
+              trends: "90d"
+              valuemap:
+                name: "Interface-Health-State"
+              tags:
+                - tag: interface
+                  value: "{#IFNAME}"
+                - tag: component
+                  value: health
+
           trigger_prototypes:
             # --- Existing v1.6 triggers ---
             - uuid: 550e8400e29b41d4a716446655449920
@@ -732,6 +757,24 @@ zabbix_export:
                 - tag: scope
                   value: performance
 
+            # PHASE 12 — Health State Warning
+            - uuid: 550e8400e29b41d4a71644665544f311
+              name: "Interface {#IFNAME}: Health degraded (Warning)"
+              expression: "last(/3Com 242x SNMP LLD Base/ifHealthState[{#IFINDEX}]) = 2"
+              priority: WARNING
+              tags:
+                - tag: scope
+                  value: health
+
+            # PHASE 12 — Health State Critical
+            - uuid: 550e8400e29b41d4a71644665544f312
+              name: "Interface {#IFNAME}: Health degraded (Critical)"
+              expression: "last(/3Com 242x SNMP LLD Base/ifHealthState[{#IFINDEX}]) = 3"
+              priority: HIGH
+              tags:
+                - tag: scope
+                  value: health
+
         # Phase 2 of v1.10 - VLAN membership + access/trunk detection
         - uuid: 550e8400e29b41d4a71644665544aa10
           name: "VLAN Discovery"
@@ -915,3 +958,14 @@ zabbix_export:
               newvalue: "1G"
             - value: "10000000000"
               newvalue: "10G"
+
+        # PHASE 12 — Interface Health Classification (IHC)
+        - uuid: 550e8400e29b41d4a716446655449b14
+          name: "Interface-Health-State"
+          mappings:
+            - value: "1"
+              newvalue: "Healthy"
+            - value: "2"
+              newvalue: "Warning"
+            - value: "3"
+              newvalue: "Critical"
