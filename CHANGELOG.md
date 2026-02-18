@@ -118,7 +118,7 @@ This project follows semantic versioning with incremental improvements.
 
 ---
 
-## v1.9.2 (Current)
+## v1.9.2
 - Added **native Zabbix 7.4 valuemap support**:
   - Introduced valuemaps section inside template block
   - Added UUID‑based valuemaps for:
@@ -146,3 +146,122 @@ This project follows semantic versioning with incremental improvements.
   - Standardized naming conventions for valuemaps, items, and triggers
   - Improved YAML structure for readability and maintainability
 - Template validated for **Zabbix 7.4** and **tested on Zabbix 8.x**
+
+## v2.0.0 — Major Release (Phases 1–20 Complete)
+
+This release represents the full evolution of the 3Com 242x SNMP LLD Base template.  
+All phases from foundational SNMP monitoring to predictive analytics, anomaly detection, noise suppression, and GitHub‑ready metadata are now integrated and validated for Zabbix **7.4+** and tested on **8.x**.
+
+---
+
+## 🚀 Core Enhancements
+
+### ✔ Full Zabbix 7.4 Compatibility
+- Updated YAML structure to match Zabbix 7.4 schema  
+- Added native `valuemaps:` section inside the template block  
+- All valuemaps now use valid UUIDv4 (32‑hex, no hyphens)  
+- Verified import compatibility with Zabbix 8.x  
+
+---
+
+# 📦 Phase‑Based Feature Integration
+
+## **Phase 1–5: Foundational Interface Monitoring**
+- Added core SNMP items:
+  - Admin/oper status  
+  - Speed  
+  - Duplex  
+  - CRC/FCS errors  
+  - Discards  
+  - Broadcast/multicast  
+- Added valuemaps:
+  - `3Com-Port-Status`  
+  - `3Com-Admin-Status`  
+  - `3Com-Duplex-Mode`  
+  - `3Com-Speed`  
+
+---
+
+## **Phase 6–10: LLD Expansion & KPI Metrics**
+- Added full interface LLD rule  
+- Added item prototypes for:
+  - Smoothed utilization  
+  - Error/discard rates  
+  - CRC rate  
+  - SLA metrics  
+- Added trigger prototypes for:
+  - High utilization  
+  - Error bursts  
+  - CRC anomalies  
+  - SLA degradation  
+
+---
+
+## **Phase 11: Interface Quality Score (IQS)**
+- Added calculated KPI: `ifQualityScore[{#IFINDEX}]`  
+- Combines:
+  - Errors  
+  - Discards  
+  - CRC  
+  - Collisions  
+  - Utilization  
+- Added warning/critical IQS triggers  
+
+---
+
+## **Phase 12: Interface Health Classification (IHC)**
+- Added calculated item: `ifHealthState[{#IFINDEX}]`  
+- Added valuemap: `Interface-Health-State`  
+- Added health‑based triggers  
+
+---
+
+## **Phase 13: Interface Role Auto‑Detection (v2)**
+- Added calculated item: `ifRoleAuto[{#IFINDEX}]`  
+- Added valuemap: `Interface-Role`  
+- Added role‑change detection trigger  
+
+---
+
+## **Phase 14: Interface Stability Index (ISI)**
+- Added calculated item: `ifStabilityIndex[{#IFINDEX}]`  
+- Factors:
+  - Flapping  
+  - Speed changes  
+  - Error bursts  
+  - Discards  
+  - CRC  
+- Added stability‑based triggers  
+
+---
+
+## **Phase 15: Noise Reduction & Trigger Optimization**
+- Added calculated item: `ifNoiseFilter[{#IFINDEX}]`  
+- Added:
+  - Hysteresis‑based error triggers  
+  - Hysteresis‑based discard triggers  
+  - Noise suppression trigger  
+- Eliminates false positives and alert storms  
+
+---
+
+## **Phase 16: Interface Behavior Prediction (IBP)**
+- Added predictive KPI: `ifBehaviorPrediction[{#IFINDEX}]`  
+- Uses:
+  - 30‑minute trends  
+  - Stability index  
+  - Utilization  
+  - Error/discard/CRC patterns  
+- Added predictive degradation trigger  
+
+---
+
+## **Phase 17: Anomaly Detection (AD)**
+- Added anomaly score: `ifAnomalyScore[{#IFINDEX}]`  
+- Based on deviation from 1‑hour baselines  
+- Added anomaly detection trigger  
+
+---
+
+## **Phase 18: LLD Rule Versioning**
+- Added version metadata inside LLD rule description.
