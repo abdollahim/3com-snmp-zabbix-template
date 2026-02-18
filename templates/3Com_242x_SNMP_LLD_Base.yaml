@@ -10,10 +10,10 @@ zabbix_export:
   templates:
     - uuid: 550e8400e29b41d4a716446655449999
       template: "3Com 242x SNMP LLD Base"
-      name: "3Com 242x SNMP LLD Base v1.10.13"
+      name: "3Com 242x SNMP LLD Base v1.10.14"
       description: |
         Production‑ready SNMP Low‑Level Discovery (LLD) template for 3Com 242x series switches.
-        Version: 1.10.13
+        Version: 1.10.14
 
         This template provides comprehensive interface‑level monitoring with enhanced reliability,
         performance analytics, and SLA‑oriented KPIs. It is optimized for Zabbix 7.4 and validated
@@ -567,6 +567,30 @@ zabbix_export:
                 - tag: component
                   value: role
 
+            # PHASE 14 — Interface Stability Index (ISI)
+            - uuid: 550e8400e29b41d4a71644665544f330
+              name: "Interface {#IFNAME}: Stability Index (ISI)"
+              type: CALCULATED
+              key: "ifStabilityIndex[{#IFINDEX}]"
+              params: >
+                100
+                - (count(//ifOperStatus[{#IFINDEX}],1h,"ne","") * 5)
+                - (change(//ifSpeed[{#IFINDEX}]) * 10)
+                - (change(//ifInErrors[{#IFINDEX}]) * 2)
+                - (change(//ifOutErrors[{#IFINDEX}]) * 2)
+                - (change(//ifInDiscards[{#IFINDEX}]) * 1)
+                - (change(//ifOutDiscards[{#IFINDEX}]) * 1)
+                - (change(//ifInCrcErrors[{#IFINDEX}]) * 3)
+              delay: "5m"
+              units: "%"
+              history: "15d"
+              trends: "90d"
+              tags:
+                - tag: interface
+                  value: "{#IFNAME}"
+                - tag: component
+                  value: stability
+
           trigger_prototypes:
             # --- Existing v1.6 triggers ---
             - uuid: 550e8400e29b41d4a716446655449920
@@ -816,6 +840,23 @@ zabbix_export:
               tags:
                 - tag: scope
                   value: role
+
+            # PHASE 14 — Stability Degradation Alert
+            - uuid: 550e8400e29b41d4a71644665544f331
+              name: "Interface {#IFNAME}: Stability Index < 60%"
+              expression: "last(/3Com 242x SNMP LLD Base/ifStabilityIndex[{#IFINDEX}]) < 60"
+              priority: WARNING
+              tags:
+                - tag: scope
+                  value: stability
+
+            - uuid: 550e8400e29b41d4a71644665544f332
+              name: "Interface {#IFNAME}: Stability Index < 30% (Critical)"
+              expression: "last(/3Com 242x SNMP LLD Base/ifStabilityIndex[{#IFINDEX}]) < 30"
+              priority: HIGH
+              tags:
+                - tag: scope
+                  value: stability
 
         # Phase 2 of v1.10 - VLAN membership + access/trunk detection
         - uuid: 550e8400e29b41d4a71644665544aa10
