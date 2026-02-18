@@ -10,10 +10,10 @@ zabbix_export:
   templates:
     - uuid: 550e8400e29b41d4a716446655449999
       template: "3Com 242x SNMP LLD Base"
-      name: "3Com 242x SNMP LLD Base v1.10.10"
+      name: "3Com 242x SNMP LLD Base v1.10.11"
       description: |
         Production‑ready SNMP Low‑Level Discovery (LLD) template for 3Com 242x series switches.
-        Version: 1.10.10
+        Version: 1.10.11
 
         This template provides comprehensive interface‑level monitoring with enhanced reliability,
         performance analytics, and SLA‑oriented KPIs. It is optimized for Zabbix 7.4 and validated
@@ -485,6 +485,30 @@ zabbix_export:
                 - tag: component
                   value: discards
 
+            # PHASE 11 — Interface Quality Score (IQS)
+            - uuid: 550e8400e29b41d4a71644665544f300
+              name: "Interface {#IFNAME}: Quality Score (IQS)"
+              type: CALCULATED
+              key: "ifQualityScore[{#IFINDEX}]"
+              params: >
+                100
+                - (last(//ifInErrors[{#IFINDEX}]) * 0.5)
+                - (last(//ifOutErrors[{#IFINDEX}]) * 0.5)
+                - (last(//ifInDiscards[{#IFINDEX}]) * 0.3)
+                - (last(//ifOutDiscards[{#IFINDEX}]) * 0.3)
+                - (last(//ifInCrcErrors[{#IFINDEX}]) * 0.7)
+                - (last(//ifCollisions[{#IFINDEX}]) * 0.4)
+                - (last(//if.util.smoothed[{#IFINDEX}]) * 0.2)
+              delay: "5m"
+              units: "%"
+              history: "15d"
+              trends: "90d"
+              tags:
+                - tag: interface
+                  value: "{#IFNAME}"
+                - tag: component
+                  value: kpi
+
           trigger_prototypes:
             # --- Existing v1.6 triggers ---
             - uuid: 550e8400e29b41d4a716446655449920
@@ -687,6 +711,23 @@ zabbix_export:
               name: "Interface {#IFNAME}: Output discards increasing"
               expression: "change(/3Com 242x SNMP LLD Base/ifOutDiscards[{#IFINDEX}]) > 0"
               priority: WARNING
+              tags:
+                - tag: scope
+                  value: performance
+
+            # PHASE 11 — Interface Quality Score Alerting
+            - uuid: 550e8400e29b41d4a71644665544f301
+              name: "Interface {#IFNAME}: Quality Score < 70%"
+              expression: "last(/3Com 242x SNMP LLD Base/ifQualityScore[{#IFINDEX}]) < 70"
+              priority: WARNING
+              tags:
+                - tag: scope
+                  value: performance
+
+            - uuid: 550e8400e29b41d4a71644665544f302
+              name: "Interface {#IFNAME}: Quality Score < 40% (Critical)"
+              expression: "last(/3Com 242x SNMP LLD Base/ifQualityScore[{#IFINDEX}]) < 40"
+              priority: HIGH
               tags:
                 - tag: scope
                   value: performance
