@@ -10,10 +10,10 @@ zabbix_export:
   templates:
     - uuid: 550e8400e29b41d4a716446655449999
       template: "3Com 242x SNMP LLD Base"
-      name: "3Com 242x SNMP LLD Base v1.9.2"
+      name: "3Com 242x SNMP LLD Base v1.10"
       description: |
         Production‑ready SNMP Low‑Level Discovery (LLD) template for 3Com 242x series switches.
-        Version: 1.9.2
+        Version: 1.10
 
         This template provides comprehensive interface‑level monitoring with enhanced reliability,
         performance analytics, and SLA‑oriented KPIs. It is optimized for Zabbix 7.4 and validated
@@ -535,6 +535,177 @@ zabbix_export:
               name: "Interface {#IFNAME} SLA compliance <95%"
               expression: "last(/3Com 242x SNMP LLD Base/ifSLA[{#IFINDEX}])<95"
               priority: HIGH
+
+            # --- Planned v1.10 triggers ---
+            - uuid: 550e8400e29b41d4a71644665544ee11
+              name: "Interface {#IFNAME} unused for more than 30 days"
+              expression: "
+                nodata(/3Com 242x SNMP LLD Base/ifInOctets[{#IFINDEX}],30d)=1 and
+                nodata(/3Com 242x SNMP LLD Base/ifOutOctets[{#IFINDEX}],30d)=1"
+              priority: INFO
+              tags:
+                - tag: scope
+                  value: performance
+
+            - uuid: 550e8400e29b41d4a71644665544ff10
+              name: "Interface {#IFNAME} is flapping (more than 3 state changes in 1 hour)"
+              expression: "change(/3Com 242x SNMP LLD Base/ifOperStatus[{#IFINDEX}],1h) > 3"
+              priority: WARNING
+              tags:
+                - tag: scope
+                  value: availability
+
+            - uuid: 550e8400e29b41d4a71644665544ff11
+              name: "Interface {#IFNAME} is severely flapping (more than 10 changes in 1 hour)"
+              expression: "change(/3Com 242x SNMP LLD Base/ifOperStatus[{#IFINDEX}],1h) > 10"
+              priority: HIGH
+              tags:
+                - tag: scope
+                  value: availability
+
+        # Phase 2 of v1.10 - VLAN membership + access/trunk detection
+        - uuid: 550e8400e29b41d4a71644665544aa10
+          name: "VLAN Discovery"
+          type: SNMP_AGENT
+          key: vlan.discovery
+          snmp_oid: "walk[1.3.6.1.2.1.17.7.1.4.3.1.1]"
+          delay: 1h
+          description: |
+            Q-BRIDGE-MIB VLAN discovery.
+            Discovers VLAN IDs and VLAN names from dot1qVlanStaticName.
+
+          lld_macro_paths:
+            - lld_macro: "{#VLANID}"
+              path: "$.1"
+            - lld_macro: "{#VLANNAME}"
+              path: "$.2"
+
+          item_prototypes:
+            - uuid: 550e8400e29b41d4a71644665544aa11
+              name: "VLAN {#VLANID}: Name"
+              type: SNMP_AGENT
+              key: "vlan.name[{#VLANID}]"
+              snmp_oid: "1.3.6.1.2.1.17.7.1.4.3.1.1.{#VLANID}"
+              delay: 1h
+              value_type: CHAR
+
+            - uuid: 550e8400e29b41d4a71644665544aa12
+              name: "VLAN {#VLANID}: Tagged ports bitmap"
+              type: SNMP_AGENT
+              key: "vlan.tagged[{#VLANID}]"
+              snmp_oid: "1.3.6.1.2.1.17.7.1.4.3.1.2.{#VLANID}"
+              delay: 1h
+              value_type: TEXT
+
+            - uuid: 550e8400e29b41d4a71644665544aa13
+              name: "VLAN {#VLANID}: Untagged ports bitmap"
+              type: SNMP_AGENT
+              key: "vlan.untagged[{#VLANID}]"
+              snmp_oid: "1.3.6.1.2.1.17.7.1.4.3.1.4.{#VLANID}"
+              delay: 1h
+              value_type: TEXT
+
+          trigger_prototypes:
+            - uuid: 550e8400e29b41d4a71644665544aa14
+              name: "VLAN {#VLANID} has no name"
+              expression: 'last(/3Com 242x SNMP LLD Base/vlan.name[{#VLANID}]) = ""'
+              priority: INFO
+
+            - uuid: 550e8400e29b41d4a71644665544cc11
+              name: "VLAN {#VLANID} has no ports assigned"
+              expression: |
+                last(/3Com 242x SNMP LLD Base/vlan.tagged[{#VLANID}]) = "" and
+                last(/3Com 242x SNMP LLD Base/vlan.untagged[{#VLANID}]) = ""
+              priority: WARNING
+
+        # Phase 3 of v1.10 - STP LLD
+        - uuid: 550e8400e29b41d4a71644665544dd10
+          name: "STP Port Discovery"
+          type: SNMP_AGENT
+          key: stp.port.discovery
+          snmp_oid: "walk[1.3.6.1.2.1.17.2.15.1.1]" # dot1dStpPortState
+          delay: 1h
+          description: |
+            BRIDGE-MIB STP port discovery.
+            Discovers STP ports and monitors STP state, role, and topology changes.
+
+          lld_macro_paths:
+            - lld_macro: "{#STPPORT}"
+              path: "$.1"
+
+          item_prototypes:
+            - uuid: 550e8400e29b41d4a71644665544dd11
+              name: "STP Port {#STPPORT}: State"
+              type: SNMP_AGENT
+              key: "stp.port.state[{#STPPORT}]"
+              snmp_oid: "1.3.6.1.2.1.17.2.15.1.1.{#STPPORT}"
+              delay: 5m
+              value_type: UNSIGNED
+              description: |
+                1 = disabled
+                2 = blocking
+                3 = listening
+                4 = learning
+                5 = forwarding
+                6 = broken
+
+            - uuid: 550e8400e29b41d4a71644665544dd12
+              name: "STP Port {#STPPORT}: Role"
+              type: SNMP_AGENT
+              key: "stp.port.role[{#STPPORT}]"
+              snmp_oid: "1.3.6.1.2.1.17.2.15.1.3.{#STPPORT}"
+              delay: 5m
+              value_type: UNSIGNED
+              description: |
+                1 = disabled
+                2 = root
+                3 = designated
+                4 = alternate
+                5 = backup
+
+            - uuid: 550e8400e29b41d4a71644665544dd13
+              name: "STP Port {#STPPORT}: Topology changes"
+              type: SNMP_AGENT
+              key: "stp.port.topchanges[{#STPPORT}]"
+              snmp_oid: "1.3.6.1.2.1.17.2.15.1.4.{#STPPORT}"
+              delay: 5m
+              value_type: UNSIGNED
+
+          trigger_prototypes:
+            - uuid: 550e8400e29b41d4a71644665544dd14
+              name: "STP Port {#STPPORT} is in blocking state"
+              expression: "last(/3Com 242x SNMP LLD Base/stp.port.state[{#STPPORT}])=2"
+              priority: WARNING
+
+            - uuid: 550e8400e29b41d4a71644665544dd15
+              name: "STP Port {#STPPORT} has topology changes"
+              expression: "change(/3Com 242x SNMP LLD Base/stp.port.topchanges[{#STPPORT}])>0"
+              priority: INFO
+
+      items:
+        - uuid: 550e8400e29b41d4a71644665544cc20
+          name: "VLAN names list"
+          type: SNMP_AGENT
+          key: vlan.names.raw
+          snmp_oid: "walk[1.3.6.1.2.1.17.7.1.4.3.1.1]"
+          delay: 1h
+          value_type: TEXT
+
+        - uuid: 550e8400e29b41d4a71644665544cc21
+          name: "Total VLAN count"
+          type: DEPENDENT
+          key: vlan.total.count
+          master_item:
+            key: vlan.names.raw
+          value_type: UNSIGNED
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // Count number of VLAN entries in SNMP walk output
+                  var lines = value.trim().split("\n");
+                  return lines.length;
+
       valuemaps:
         - uuid: 550e8400e29b41d4a716446655449a01
           name: "3Com-Port-Status"
