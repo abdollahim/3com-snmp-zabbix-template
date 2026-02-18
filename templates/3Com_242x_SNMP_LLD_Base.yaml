@@ -10,10 +10,10 @@ zabbix_export:
   templates:
     - uuid: 550e8400e29b41d4a716446655449999
       template: "3Com 242x SNMP LLD Base"
-      name: "3Com 242x SNMP LLD Base v1.10.5"
+      name: "3Com 242x SNMP LLD Base v1.10.10"
       description: |
         Production‑ready SNMP Low‑Level Discovery (LLD) template for 3Com 242x series switches.
-        Version: 1.10.5
+        Version: 1.10.10
 
         This template provides comprehensive interface‑level monitoring with enhanced reliability,
         performance analytics, and SLA‑oriented KPIs. It is optimized for Zabbix 7.4 and validated
@@ -238,58 +238,7 @@ zabbix_export:
                 - tag: component
                   value: performance
 
-            - uuid: 550e8400e29b41d4a716446655449908
-              name: "Interface {#IFNAME}: input errors"
-              type: SNMP_AGENT
-              key: "ifInErrors[{#IFINDEX}]"
-              snmp_oid: "ifInErrors.{#IFINDEX}"
-              delay: "5m"
-              history: "15d"
-              trends: "90d"
-              preprocessing:
-                - type: CHANGE_PER_SECOND
-              tags:
-                - tag: interface
-                  value: "{#IFNAME}"
-                - tag: direction
-                  value: in
-                - tag: component
-                  value: reliability
-
-            - uuid: 550e8400e29b41d4a716446655449909
-              name: "Interface {#IFNAME}: output errors"
-              type: SNMP_AGENT
-              key: "ifOutErrors[{#IFINDEX}]"
-              snmp_oid: "ifOutErrors.{#IFINDEX}"
-              delay: "5m"
-              history: "15d"
-              trends: "90d"
-              preprocessing:
-                - type: CHANGE_PER_SECOND
-              tags:
-                - tag: interface
-                  value: "{#IFNAME}"
-                - tag: direction
-                  value: out
-                - tag: component
-                  value: reliability
-
-            - uuid: 550e8400e29b41d4a716446655449910
-              name: "Interface {#IFNAME}: role speed reference"
-              type: CALCULATED
-              key: "ifRole[{#IFINDEX}]"
-              params: "last(//ifSpeed[{#IFINDEX}])"
-              delay: "1h"
-              value_type: UNSIGNED
-              history: "15d"
-              trends: "0"
-              tags:
-                - tag: interface
-                  value: "{#IFNAME}"
-                - tag: component
-                  value: metadata
-
-            # --- New v1.7 item prototypes ---
+            # --- v1.7 items ---
             - uuid: 550e8400e29b41d4a716446655449911
               name: "Interface {#IFNAME}: VLAN"
               type: SNMP_AGENT
@@ -319,24 +268,6 @@ zabbix_export:
               history: "15d"
               trends: "0"
 
-            - uuid: 550e8400e29b41d4a716446655449914
-              name: "Interface {#IFNAME}: input discards"
-              type: SNMP_AGENT
-              key: "ifInDiscards[{#IFINDEX}]"
-              snmp_oid: "ifInDiscards.{#IFINDEX}"
-              delay: "5m"
-              history: "15d"
-              trends: "90d"
-
-            - uuid: 550e8400e29b41d4a716446655449915
-              name: "Interface {#IFNAME}: output discards"
-              type: SNMP_AGENT
-              key: "ifOutDiscards[{#IFINDEX}]"
-              snmp_oid: "ifOutDiscards.{#IFINDEX}"
-              delay: "5m"
-              history: "15d"
-              trends: "90d"
-
             - uuid: 550e8400e29b41d4a716446655449916
               name: "Interface {#IFNAME}: input broadcasts"
               type: SNMP_AGENT
@@ -355,7 +286,7 @@ zabbix_export:
               history: "15d"
               trends: "90d"
 
-            # --- Planned v1.8 item prototypes ---
+            # --- v1.8 items ---
             - uuid: 550e8400e29b41d4a716446655449930
               name: "Interface {#IFNAME}: CRC errors"
               type: SNMP_AGENT
@@ -435,7 +366,7 @@ zabbix_export:
                 - tag: component
                   value: reliability
 
-            # --- Planned v1.9 item prototypes ---
+            # --- v1.9 items ---
             - uuid: 550e8400e29b41d4a716446655449950
               name: "Interface {#IFNAME}: queue drops"
               type: SNMP_AGENT
@@ -482,7 +413,7 @@ zabbix_export:
                 - tag: component
                   value: kpi
 
-            # PHASE 9 — CORRECT DUPLEX DETECTION FOR 3Com / HP 242x
+            # PHASE 9 — CORRECT DUPLEX DETECTION
             - uuid: 550e8400e29b41d4a71644665544dd01
               name: "Interface {#IFNAME}: Duplex status"
               type: SNMP_AGENT
@@ -496,6 +427,63 @@ zabbix_export:
                   value: "{#IFNAME}"
                 - tag: component
                   value: duplex
+
+            # PHASE 10 — CLEANED ITEMS (FINAL)
+            - uuid: 550e8400e29b41d4a71644665544f105
+              name: "Interface {#IFNAME}: Input errors"
+              type: SNMP_AGENT
+              key: "ifInErrors[{#IFINDEX}]"
+              snmp_oid: "ifInErrors.{#IFINDEX}"
+              delay: 1m
+              history: 7d
+              trends: 30d
+              tags:
+                - tag: interface
+                  value: "{#IFNAME}"
+                - tag: component
+                  value: errors
+
+            - uuid: 550e8400e29b41d4a71644665544f106
+              name: "Interface {#IFNAME}: Output errors"
+              type: SNMP_AGENT
+              key: "ifOutErrors[{#IFINDEX}]"
+              snmp_oid: "ifOutErrors.{#IFINDEX}"
+              delay: 1m
+              history: 7d
+              trends: 30d
+              tags:
+                - tag: interface
+                  value: "{#IFNAME}"
+                - tag: component
+                  value: errors
+
+            - uuid: 550e8400e29b41d4a71644665544f107
+              name: "Interface {#IFNAME}: Input discards"
+              type: SNMP_AGENT
+              key: "ifInDiscards[{#IFINDEX}]"
+              snmp_oid: "ifInDiscards.{#IFINDEX}"
+              delay: 1m
+              history: 7d
+              trends: 30d
+              tags:
+                - tag: interface
+                  value: "{#IFNAME}"
+                - tag: component
+                  value: discards
+
+            - uuid: 550e8400e29b41d4a71644665544f108
+              name: "Interface {#IFNAME}: Output discards"
+              type: SNMP_AGENT
+              key: "ifOutDiscards[{#IFINDEX}]"
+              snmp_oid: "ifOutDiscards.{#IFINDEX}"
+              delay: 1m
+              history: 7d
+              trends: 30d
+              tags:
+                - tag: interface
+                  value: "{#IFNAME}"
+                - tag: component
+                  value: discards
 
           trigger_prototypes:
             # --- Existing v1.6 triggers ---
@@ -576,11 +564,11 @@ zabbix_export:
               priority: HIGH
 
             # --- Planned v1.10 triggers ---
-            - uuid: 550e8400e29b41d4a71644665544ee11
+            - uuid: 550e8400e29b41d4a71644665544f200
               name: "Interface {#IFNAME} unused for more than 30 days"
-              expression: "
+              expression: >
                 nodata(/3Com 242x SNMP LLD Base/ifInOctets[{#IFINDEX}],30d)=1 and
-                nodata(/3Com 242x SNMP LLD Base/ifOutOctets[{#IFINDEX}],30d)=1"
+                nodata(/3Com 242x SNMP LLD Base/ifOutOctets[{#IFINDEX}],30d)=1
               priority: INFO
               tags:
                 - tag: scope
@@ -652,9 +640,9 @@ zabbix_export:
             # PHASE 9 — DUPLEX MISMATCH DETECTION
             - uuid: 550e8400e29b41d4a71644665544dd10
               name: "Interface {#IFNAME}: Possible duplex mismatch (half-duplex with errors)"
-              expression: "
+              expression: >
                 last(/3Com 242x SNMP LLD Base/dot3StatsDuplexStatus[{#IFINDEX}]) = 2
-                and change(/3Com 242x SNMP LLD Base/ifInErrors[{#IFINDEX}]) > 0"
+                and change(/3Com 242x SNMP LLD Base/ifInErrors[{#IFINDEX}]) > 0
               priority: HIGH
               tags:
                 - tag: scope
@@ -662,9 +650,42 @@ zabbix_export:
 
             - uuid: 550e8400e29b41d4a71644665544dd11
               name: "Interface {#IFNAME}: Possible duplex mismatch (half-duplex with discards)"
-              expression: "
+              expression: >
                 last(/3Com 242x SNMP LLD Base/dot3StatsDuplexStatus[{#IFINDEX}]) = 2
-                and change(/3Com 242x SNMP LLD Base/ifInDiscards[{#IFINDEX}]) > 0"
+                and change(/3Com 242x SNMP LLD Base/ifInDiscards[{#IFINDEX}]) > 0
+              priority: WARNING
+              tags:
+                - tag: scope
+                  value: performance
+
+            # PHASE 10 — CLEANED TRIGGERS (FINAL)
+            - uuid: 550e8400e29b41d4a71644665544f002
+              name: "Interface {#IFNAME}: CRC/FCS errors detected (input)"
+              expression: "change(/3Com 242x SNMP LLD Base/ifInErrors[{#IFINDEX}]) > 0"
+              priority: HIGH
+              tags:
+                - tag: scope
+                  value: performance
+
+            - uuid: 550e8400e29b41d4a71644665544f001
+              name: "Interface {#IFNAME}: CRC/FCS errors detected (output)"
+              expression: "change(/3Com 242x SNMP LLD Base/ifOutErrors[{#IFINDEX}]) > 0"
+              priority: HIGH
+              tags:
+                - tag: scope
+                  value: performance
+
+            - uuid: 550e8400e29b41d4a71644665544f102
+              name: "Interface {#IFNAME}: Input discards increasing"
+              expression: "change(/3Com 242x SNMP LLD Base/ifInDiscards[{#IFINDEX}]) > 0"
+              priority: WARNING
+              tags:
+                - tag: scope
+                  value: performance
+
+            - uuid: 550e8400e29b41d4a71644665544f103
+              name: "Interface {#IFNAME}: Output discards increasing"
+              expression: "change(/3Com 242x SNMP LLD Base/ifOutDiscards[{#IFINDEX}]) > 0"
               priority: WARNING
               tags:
                 - tag: scope
