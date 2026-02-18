@@ -10,10 +10,10 @@ zabbix_export:
   templates:
     - uuid: 550e8400e29b41d4a716446655449999
       template: "3Com 242x SNMP LLD Base"
-      name: "3Com 242x SNMP LLD Base v1.10.17"
+      name: "3Com 242x SNMP LLD Base v1.10.20"
       description: |
         Production‑ready SNMP Low‑Level Discovery (LLD) template for 3Com 242x series switches.
-        Version: 1.10.17
+        Version: 1.10.20
 
         This template provides comprehensive interface‑level monitoring with enhanced reliability,
         performance analytics, and SLA‑oriented KPIs. It is optimized for Zabbix 7.4 and validated
@@ -45,6 +45,8 @@ zabbix_export:
 
         Compatibility: • Fully compatible with Zabbix 7.4
           • Tested for Zabbix 8.x import and runtime behavior
+        LLD Version: 18
+
       groups:
         - name: "Templates/Network"
 
@@ -55,6 +57,10 @@ zabbix_export:
           value: "90"
         - macro: "{$IF_ERROR_RATE}"
           value: "10"
+        - macro: "{$TEMPLATE.VERSION}"
+          value: "1.20"
+        - macro: "{$TEMPLATE.PHASES}"
+          value: "20"
 
         # New macros for v1.7
         - macro: "{$IF_DISCARD_RATE}"
