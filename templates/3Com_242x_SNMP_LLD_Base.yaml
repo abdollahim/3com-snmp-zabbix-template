@@ -10,41 +10,67 @@ zabbix_export:
   templates:
     - uuid: 550e8400e29b41d4a716446655449999
       template: "3Com 242x SNMP LLD Base"
-      name: "3Com 242x SNMP LLD Base v1.10.20"
+      name: "3Com 242x SNMP LLD Base v2.0.0"
       description: |
         Production‑ready SNMP Low‑Level Discovery (LLD) template for 3Com 242x series switches.
-        Version: 1.10.20
+        Version: 2.0.0
 
-        This template provides comprehensive interface‑level monitoring with enhanced reliability,
-        performance analytics, and SLA‑oriented KPIs. It is optimized for Zabbix 7.4 and validated
-        for compatibility with Zabbix 8.x.
+        This template delivers full interface‑level monitoring with advanced analytics, predictive
+        modeling, anomaly detection, stability scoring, noise suppression, and SLA‑oriented KPIs.
+        It is fully aligned with the Zabbix 7.4 YAML schema and validated for compatibility with
+        Zabbix 8.x.
 
-        Features:
-          • Automatic interface discovery using IF‑MIB
+        Core Features:
+          • Automatic interface discovery using IF‑MIB with enhanced metadata collection
           • Real‑time traffic monitoring (bps, utilization, smoothed 3‑sample average)
-          • Error, discard, CRC, and collision monitoring with sustained‑rate detection
-          • Broadcast and multicast anomaly detection with configurable thresholds
-          • Admin/oper status correlation logic for accurate link‑state reporting
-          • Per‑interface macros for CRC, collisions, error percentage, queue drops, latency, and SLA
-          • Multi‑tier uplink role detection (100M / 1G / 10G / access)
-          • VLAN, MTU, and duplex mode collection with enhanced tagging
-          Calculated KPIs:
-            – Error/discard percentage relative to traffic volume
-            – SLA compliance score
-            – Latency estimation per interface
-          • Queue drop monitoring for reliability and congestion analysis
-          • Optimized history and trend retention for database efficiency
-          • Predefined value maps for port status, admin status, duplex mode, and speed
+          • Error, discard, CRC, collision, broadcast, and multicast monitoring
+          • Sustained‑rate detection for reliability‑critical counters
+          • Admin/oper status correlation for accurate link‑state reporting
+          • Queue drop monitoring for congestion and reliability analysis
+          • VLAN, MTU, duplex mode, and interface description collection
+          • Native Zabbix 7.4 valuemap support with UUID‑based valuemaps
+
+        Advanced Analytics (Phases 11–17):
+          • Interface Quality Score (IQS) — composite reliability KPI
+          • Interface Health Classification (IHC) — healthy/warning/critical state mapping
+          • Interface Stability Index (ISI) — flapping, CRC, discard, and speed‑change scoring
+          • Noise Filter (NF) — suppresses false positives and noisy interfaces
+          • Interface Behavior Prediction (IBP) — predictive degradation modeling
+          • Anomaly Detection (AD) — deviation‑based behavioral anomaly scoring
+
+        Role Detection (Phase 13):
+          • Multi‑tier uplink/access/server role auto‑classification
+          • Detects uplink‑100M, uplink‑1G, uplink‑10G, trunk, access, and server/high‑speed roles
+          • Role‑change detection trigger for topology awareness
+
+        Calculated KPIs:
+          – Error/discard percentage relative to traffic volume
+          – SLA compliance score per interface
+          – Latency estimation
+          – Stability, prediction, and anomaly scores
+
+        Trigger Enhancements:
           • Clean, severity‑aligned trigger set for performance, reliability, and SLA deviations
-          • Fully LLD‑driven, no manual configuration required
+          • Hysteresis‑based triggers for errors, discards, and CRC anomalies
+          • Noise‑aware suppression logic to prevent alert storms
+          • Predictive and anomaly‑based alerts for proactive monitoring
+
+        Template Architecture:
+          • Fully LLD‑driven — no manual per‑port configuration required
+          • Optimized history and trend retention for database efficiency
+          • Dashboard‑friendly tagging for filtering and visualization
+          • Standardized UUID patterns for items, triggers, and valuemaps
+          • GitHub‑ready metadata and versioning (Phase 20)
 
         Intended Use:
           • Suitable for production environments with large numbers of 3Com switches
-          • Designed for long‑term trending, SLA reporting, and reliability analysis
-          • Ideal for network operations teams requiring detailed per‑interface diagnostics
+          • Designed for long‑term trending, SLA reporting, and reliability analytics
+          • Ideal for NOC teams requiring deep per‑interface diagnostics
 
-        Compatibility: • Fully compatible with Zabbix 7.4
+        Compatibility:
+          • Fully compatible with Zabbix 7.4
           • Tested for Zabbix 8.x import and runtime behavior
+
         LLD Version: 18
 
       groups:
