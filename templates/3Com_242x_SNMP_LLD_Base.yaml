@@ -10,10 +10,10 @@ zabbix_export:
   templates:
     - uuid: 550e8400e29b41d4a716446655449999
       template: "3Com 242x SNMP LLD Base"
-      name: "3Com 242x SNMP LLD Base v1.10.12"
+      name: "3Com 242x SNMP LLD Base v1.10.13"
       description: |
         Production‑ready SNMP Low‑Level Discovery (LLD) template for 3Com 242x series switches.
-        Version: 1.10.12
+        Version: 1.10.13
 
         This template provides comprehensive interface‑level monitoring with enhanced reliability,
         performance analytics, and SLA‑oriented KPIs. It is optimized for Zabbix 7.4 and validated
@@ -534,6 +534,39 @@ zabbix_export:
                 - tag: component
                   value: health
 
+            # PHASE 13 — Interface Role Auto-Detection (v2)
+            - uuid: 9a7e1c3d2f4b4e8c8d556c1a9b2e7f44
+              name: "Interface {#IFNAME}: Role"
+              type: CALCULATED
+              key: "ifRoleAuto[{#IFINDEX}]"
+              params: >
+                (
+                  (last(//ifSpeed[{#IFINDEX}]) >= 1000000000) * 4
+                  +
+                  ((last(//ifSpeed[{#IFINDEX}]) >= 100000000) 
+                    and (last(//ifInBroadcastPkts[{#IFINDEX}]) < 50)
+                    and (last(//ifInMulticastPkts[{#IFINDEX}]) < 50)) * 3
+                  +
+                  ((last(//ifVlan[{#IFINDEX}]) > 1)
+                    and (last(//ifSpeed[{#IFINDEX}]) < 100000000)) * 2
+                  +
+                  ((last(//ifSpeed[{#IFINDEX}]) < 100000000)
+                    and (last(//ifInBroadcastPkts[{#IFINDEX}]) > 200)) * 1
+                  +
+                  0
+                )
+              delay: "5m"
+              value_type: UNSIGNED
+              history: "15d"
+              trends: "90d"
+              valuemap:
+                name: "Interface-Role"
+              tags:
+                - tag: interface
+                  value: "{#IFNAME}"
+                - tag: component
+                  value: role
+
           trigger_prototypes:
             # --- Existing v1.6 triggers ---
             - uuid: 550e8400e29b41d4a716446655449920
@@ -775,6 +808,15 @@ zabbix_export:
                 - tag: scope
                   value: health
 
+            # PHASE 13 — Role Change Detection
+            - uuid: c4d1e7a93b5f4c8e9a332e7d1f4b6c88
+              name: "Interface {#IFNAME}: Role changed unexpectedly"
+              expression: "change(/3Com 242x SNMP LLD Base/ifRoleAuto[{#IFINDEX}]) <> 0"
+              priority: INFO
+              tags:
+                - tag: scope
+                  value: role
+
         # Phase 2 of v1.10 - VLAN membership + access/trunk detection
         - uuid: 550e8400e29b41d4a71644665544aa10
           name: "VLAN Discovery"
@@ -969,3 +1011,18 @@ zabbix_export:
               newvalue: "Warning"
             - value: "3"
               newvalue: "Critical"
+
+        # PHASE 13 — Role Change Detection
+        - uuid: f3c2a4b18d4e4f9a9c221b7e3d4c8a11
+          name: "Interface-Role"
+          mappings:
+            - value: "0"
+              newvalue: "Unknown"
+            - value: "1"
+              newvalue: "Access port"
+            - value: "2"
+              newvalue: "Trunk port"
+            - value: "3"
+              newvalue: "Uplink"
+            - value: "4"
+              newvalue: "Server/High‑speed"
