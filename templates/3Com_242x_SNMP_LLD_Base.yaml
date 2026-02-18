@@ -10,10 +10,10 @@ zabbix_export:
   templates:
     - uuid: 550e8400e29b41d4a716446655449999
       template: "3Com 242x SNMP LLD Base"
-      name: "3Com 242x SNMP LLD Base v1.10.14"
+      name: "3Com 242x SNMP LLD Base v1.10.15"
       description: |
         Production‑ready SNMP Low‑Level Discovery (LLD) template for 3Com 242x series switches.
-        Version: 1.10.14
+        Version: 1.10.15
 
         This template provides comprehensive interface‑level monitoring with enhanced reliability,
         performance analytics, and SLA‑oriented KPIs. It is optimized for Zabbix 7.4 and validated
@@ -591,6 +591,30 @@ zabbix_export:
                 - tag: component
                   value: stability
 
+            # PHASE 15 — Noise Filter (NF)
+            - uuid: 550e8400e29b41d4a71644665544f340
+              name: "Interface {#IFNAME}: Noise Filter"
+              type: CALCULATED
+              key: "ifNoiseFilter[{#IFINDEX}]"
+              params: >
+                (
+                  (change(//ifInErrors[{#IFINDEX}]) > 0) * 1 +
+                  (change(//ifOutErrors[{#IFINDEX}]) > 0) * 1 +
+                  (change(//ifInDiscards[{#IFINDEX}]) > 0) * 1 +
+                  (change(//ifOutDiscards[{#IFINDEX}]) > 0) * 1 +
+                  (change(//ifInCrcErrors[{#IFINDEX}]) > 0) * 2 +
+                  (count(//ifOperStatus[{#IFINDEX}],30m,"ne","") > 1) * 2
+                )
+              delay: "5m"
+              value_type: UNSIGNED
+              history: "7d"
+              trends: "30d"
+              tags:
+                - tag: interface
+                  value: "{#IFNAME}"
+                - tag: component
+                  value: noise
+
           trigger_prototypes:
             # --- Existing v1.6 triggers ---
             - uuid: 550e8400e29b41d4a716446655449920
@@ -857,6 +881,32 @@ zabbix_export:
               tags:
                 - tag: scope
                   value: stability
+
+            # PHASE 15 — Error Spike with Hysteresis
+            - uuid: 550e8400e29b41d4a71644665544f341
+              name: "Interface {#IFNAME}: Persistent error spike"
+              expression: >
+                min(/3Com 242x SNMP LLD Base/ifInErrors[{#IFINDEX}],5m) > 0
+                or
+                min(/3Com 242x SNMP LLD Base/ifOutErrors[{#IFINDEX}],5m) > 0
+              recovery_mode: RECOVERY_EXPRESSION
+              recovery_expression: >
+                max(/3Com 242x SNMP LLD Base/ifInErrors[{#IFINDEX}],5m) = 0
+                and
+                max(/3Com 242x SNMP LLD Base/ifOutErrors[{#IFINDEX}],5m) = 0
+              priority: WARNING
+              tags:
+                - tag: scope
+                  value: noise
+
+            # PHASE 15 — Noise Suppression
+            - uuid: 550e8400e29b41d4a71644665544f343
+              name: "Interface {#IFNAME}: Noise level high (alerts suppressed)"
+              expression: "last(/3Com 242x SNMP LLD Base/ifNoiseFilter[{#IFINDEX}]) >= 5"
+              priority: INFO
+              tags:
+                - tag: scope
+                  value: suppression
 
         # Phase 2 of v1.10 - VLAN membership + access/trunk detection
         - uuid: 550e8400e29b41d4a71644665544aa10
