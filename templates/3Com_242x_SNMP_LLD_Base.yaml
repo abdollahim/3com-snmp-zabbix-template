@@ -10,10 +10,10 @@ zabbix_export:
   templates:
     - uuid: 550e8400e29b41d4a716446655449999
       template: "3Com 242x SNMP LLD Base"
-      name: "3Com 242x SNMP LLD Base v1.10.4"
+      name: "3Com 242x SNMP LLD Base v1.10.5"
       description: |
         Production‑ready SNMP Low‑Level Discovery (LLD) template for 3Com 242x series switches.
-        Version: 1.10.4
+        Version: 1.10.5
 
         This template provides comprehensive interface‑level monitoring with enhanced reliability,
         performance analytics, and SLA‑oriented KPIs. It is optimized for Zabbix 7.4 and validated
@@ -482,6 +482,21 @@ zabbix_export:
                 - tag: component
                   value: kpi
 
+            # PHASE 9 — CORRECT DUPLEX DETECTION FOR 3Com / HP 242x
+            - uuid: 550e8400e29b41d4a71644665544dd01
+              name: "Interface {#IFNAME}: Duplex status"
+              type: SNMP_AGENT
+              key: "dot3StatsDuplexStatus[{#IFINDEX}]"
+              snmp_oid: "1.3.6.1.2.1.10.7.2.1.19.{#IFINDEX}"
+              delay: 1m
+              history: 7d
+              trends: 30d
+              tags:
+                - tag: interface
+                  value: "{#IFNAME}"
+                - tag: component
+                  value: duplex
+
           trigger_prototypes:
             # --- Existing v1.6 triggers ---
             - uuid: 550e8400e29b41d4a716446655449920
@@ -630,6 +645,27 @@ zabbix_export:
               name: "Interface {#IFNAME}: Speed is below 10Gbps"
               expression: "last(/3Com 242x SNMP LLD Base/ifSpeed[{#IFINDEX}]) < 10000000000 and last(/3Com 242x SNMP LLD Base/ifSpeed[{#IFINDEX}]) >= 1000000000"
               priority: HIGH
+              tags:
+                - tag: scope
+                  value: performance
+
+            # PHASE 9 — DUPLEX MISMATCH DETECTION
+            - uuid: 550e8400e29b41d4a71644665544dd10
+              name: "Interface {#IFNAME}: Possible duplex mismatch (half-duplex with errors)"
+              expression: "
+                last(/3Com 242x SNMP LLD Base/dot3StatsDuplexStatus[{#IFINDEX}]) = 2
+                and change(/3Com 242x SNMP LLD Base/ifInErrors[{#IFINDEX}]) > 0"
+              priority: HIGH
+              tags:
+                - tag: scope
+                  value: performance
+
+            - uuid: 550e8400e29b41d4a71644665544dd11
+              name: "Interface {#IFNAME}: Possible duplex mismatch (half-duplex with discards)"
+              expression: "
+                last(/3Com 242x SNMP LLD Base/dot3StatsDuplexStatus[{#IFINDEX}]) = 2
+                and change(/3Com 242x SNMP LLD Base/ifInDiscards[{#IFINDEX}]) > 0"
+              priority: WARNING
               tags:
                 - tag: scope
                   value: performance
